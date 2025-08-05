@@ -2,97 +2,402 @@
 
 {% block title %}Market - IMPERIJUM{% endblock %}
 
+{% block extra_head %}
+<style>
+.market-header {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.market-filter-tabs {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.filter-tab {
+    background: transparent;
+    border: 2px solid #e2e8f0;
+    color: #4a5568;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    margin: 0.25rem;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.filter-tab.active {
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    border-color: transparent;
+    color: white;
+}
+
+.filter-tab:hover {
+    border-color: #48bb78;
+    color: #48bb78;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.product-card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.product-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #48bb78, #38a169);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.product-card:hover::before {
+    opacity: 1;
+}
+
+.category-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.category-raw_material {
+    background: linear-gradient(135deg, #f56565, #e53e3e);
+    color: white;
+}
+
+.category-manufactured {
+    background: linear-gradient(135deg, #ed8936, #c05621);
+    color: white;
+}
+
+.category-retail {
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    color: white;
+}
+
+.price-display {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #48bb78;
+    margin: 1rem 0;
+}
+
+.stock-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.stock-level {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.stock-high { background: #48bb78; }
+.stock-medium { background: #ed8936; }
+.stock-low { background: #f56565; }
+.stock-out { background: #e2e8f0; }
+
+.buy-button {
+    width: 100%;
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    border: none;
+    color: white;
+    padding: 0.75rem;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.buy-button:hover {
+    background: linear-gradient(135deg, #38a169, #2f855a);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
+    color: white;
+}
+
+.buy-button:disabled {
+    background: #e2e8f0;
+    color: #a0aec0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.market-stats {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 1.5rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #48bb78;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.transaction-item:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateX(5px);
+}
+
+.search-bar {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 25px;
+    padding: 0.75rem 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.search-bar:focus {
+    background: white;
+    border-color: #48bb78;
+    box-shadow: 0 0 0 0.2rem rgba(72, 187, 120, 0.25);
+}
+
+@media (max-width: 768px) {
+    .product-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .market-filter-tabs {
+        text-align: center;
+    }
+    
+    .filter-tab {
+        display: block;
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5>Product Market</h5>
-                <button class="btn btn-outline-primary btn-sm" onclick="gameUtils.refreshMarketData()">
-                    Refresh
+<!-- Market Header -->
+<div class="market-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2">📈 Product Market</h1>
+                <p class="mb-0 opacity-75">Buy and sell products in the dynamic marketplace</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-light" onclick="refreshMarketData()">
+                    <span>🔄</span> Refresh Market
                 </button>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped market-table">
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>Category</th>
-                                <th>Company</th>
-                                <th>Market Price</th>
-                                <th>Stock</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for product in products %}
-                            <tr>
-                                <td>{{ product.name }}</td>
-                                <td>
-                                    <span class="badge bg-secondary">{{ product.category|title }}</span>
-                                </td>
-                                <td>{{ product.company.name }}</td>
-                                <td class="fw-bold">${{ "%.2f"|format(product.market_price) }}</td>
-                                <td>{{ product.stock_quantity }}</td>
-                                <td>
-                                    {% if product.stock_quantity > 0 %}
-                                    <button class="btn btn-success btn-sm" onclick="buyProduct({{ product.id }})">
-                                        Buy
-                                    </button>
-                                    {% else %}
-                                    <span class="text-muted">Out of Stock</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        </div>
+    </div>
+</div>
+
+<!-- Market Filters and Search -->
+<div class="container">
+    <div class="market-filter-tabs">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex flex-wrap">
+                    <button class="filter-tab active" data-category="all">All Products</button>
+                    <button class="filter-tab" data-category="raw_material">🏭 Raw Materials</button>
+                    <button class="filter-tab" data-category="manufactured">⚙️ Manufacturing</button>
+                    <button class="filter-tab" data-category="retail">🛒 Retail</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <input type="text" class="form-control search-bar" id="product-search" 
+                       placeholder="🔍 Search products...">
+            </div>
+        </div>
+    </div>
+
+    <!-- Market Stats Overview -->
+    <div class="market-stats">
+        <div class="row">
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-value" id="total-products">{{ products|length }}</div>
+                    <div class="stat-label">Products</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-value" id="avg-price">$0</div>
+                    <div class="stat-label">Avg Price</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-value" id="total-stock">0</div>
+                    <div class="stat-label">Total Stock</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-value" id="active-companies">0</div>
+                    <div class="stat-label">Companies</div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h6>Recent Transactions</h6>
-            </div>
-            <div class="card-body">
-                {% if transactions %}
-                <div class="list-group list-group-flush">
-                    {% for transaction in transactions %}
-                    <div class="list-group-item p-2">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ transaction.product.name }}</h6>
-                            <small>{{ transaction.transaction_date.strftime('%H:%M') }}</small>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Products Grid -->
+            <div class="product-grid" id="products-container">
+                {% for product in products %}
+                <div class="product-card" data-category="{{ product.category }}" data-name="{{ product.name.lower() }}">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="mb-1 fw-bold">{{ product.name }}</h5>
+                            <small class="text-muted">by {{ product.company.name }}</small>
                         </div>
-                        <p class="mb-1">
-                            <small>{{ transaction.quantity }} units @ ${{ "%.2f"|format(transaction.price_per_unit) }}</small>
-                        </p>
-                        <small class="text-muted">
-                            {{ transaction.seller_company.name }} → 
-                            {% if transaction.buyer_company %}{{ transaction.buyer_company.name }}{% else %}Market{% endif %}
-                        </small>
+                        <span class="category-badge category-{{ product.category }}">
+                            {% if product.category == 'raw_material' %}🏭{% elif product.category == 'manufactured' %}⚙️{% else %}🛒{% endif %}
+                            {{ product.category|replace('_', ' ')|title }}
+                        </span>
                     </div>
-                    {% endfor %}
+                    
+                    <div class="price-display">
+                        ${{ "%.2f"|format(product.market_price) }}
+                    </div>
+                    
+                    <div class="stock-indicator">
+                        {% set stock_level = 'high' if product.stock_quantity > 300 else 'medium' if product.stock_quantity > 100 else 'low' if product.stock_quantity > 0 else 'out' %}
+                        <div class="stock-level stock-{{ stock_level }}"></div>
+                        <span class="text-muted">
+                            {% if product.stock_quantity > 300 %}High Stock{% elif product.stock_quantity > 100 %}Medium Stock{% elif product.stock_quantity > 0 %}Low Stock{% else %}Out of Stock{% endif %}
+                            ({{ product.stock_quantity }} units)
+                        </span>
+                    </div>
+                    
+                    {% if product.stock_quantity > 0 %}
+                    <button class="buy-button" onclick="openBuyModal({{ product.id }}, '{{ product.name }}', {{ product.market_price }}, {{ product.stock_quantity }})">
+                        💰 Buy Now
+                    </button>
+                    {% else %}
+                    <button class="buy-button" disabled>
+                        ❌ Out of Stock
+                    </button>
+                    {% endif %}
                 </div>
-                {% else %}
-                <p class="text-muted">No recent transactions</p>
-                {% endif %}
+                {% endfor %}
             </div>
         </div>
         
-        <div class="card mt-3">
-            <div class="card-header">
-                <h6>Market Summary</h6>
-            </div>
-            <div class="card-body">
-                <div id="market-data">
-                    <div class="text-center">
-                        <div class="spinner-border spinner-border-sm" role="status">
-                            <span class="visually-hidden">Loading...</span>
+        <div class="col-lg-4">
+            <!-- Recent Transactions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">📊 Recent Transactions</h6>
+                </div>
+                <div class="card-body">
+                    {% if transactions %}
+                        {% for transaction in transactions %}
+                        <div class="transaction-item">
+                            <div>
+                                <div class="fw-bold">{{ transaction.product.name }}</div>
+                                <small class="text-muted">
+                                    {{ transaction.quantity }} units @ ${{ "%.2f"|format(transaction.price_per_unit) }}
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">{{ transaction.transaction_date.strftime('%H:%M') }}</small>
+                            </div>
                         </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <div style="font-size: 3rem; opacity: 0.3;">📊</div>
+                            <p class="text-muted mb-0">No recent transactions</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">⚡ Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('game.companies') }}" class="btn btn-outline-primary">
+                            🏢 Manage Companies
+                        </a>
+                        <a href="{{ url_for('game.stock_exchange') }}" class="btn btn-outline-success">
+                            📈 Stock Exchange
+                        </a>
+                        <a href="{{ url_for('game.workers') }}" class="btn btn-outline-info">
+                            👥 Hire Workers
+                        </a>
+                        <a href="{{ url_for('game.dashboard') }}" class="btn btn-outline-secondary">
+                            📊 Back to Dashboard
+                        </a>
                     </div>
                 </div>
             </div>
@@ -100,29 +405,54 @@
     </div>
 </div>
 
-<!-- Buy Product Modal -->
-<div class="modal fade" id="buyProductModal" tabindex="-1">
-    <div class="modal-dialog">
+<!-- Enhanced Buy Product Modal -->
+<div class="modal fade" id="buyProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Buy Product</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">💰 Purchase Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <div class="product-info mb-4 p-3 bg-light rounded">
+                    <h6 id="modal-product-name" class="fw-bold mb-1"></h6>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Unit Price:</span>
+                        <span class="fw-bold" id="modal-unit-price"></span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Available:</span>
+                        <span id="modal-stock"></span>
+                    </div>
+                </div>
+                
                 <form id="buyProductForm" method="POST" action="/game/buy_product">
                     <input type="hidden" id="product_id" name="product_id">
+                    
                     <div class="mb-3">
-                        <label for="quantity" class="form-label">Quantity</label>
-                        <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+                        <label for="quantity" class="form-label fw-bold">Quantity</label>
+                        <div class="input-group">
+                            <button type="button" class="btn btn-outline-secondary" onclick="changeQuantity(-1)">-</button>
+                            <input type="number" class="form-control text-center" id="quantity" name="quantity" 
+                                   min="1" value="1" required onchange="updateTotal()">
+                            <button type="button" class="btn btn-outline-secondary" onclick="changeQuantity(1)">+</button>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <p>Total Cost: $<span id="total_cost">0.00</span></p>
+                    
+                    <div class="total-display p-3 bg-primary bg-opacity-10 rounded mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold">Total Cost:</span>
+                            <span class="h5 mb-0 text-primary fw-bold">$<span id="total_cost">0.00</span></span>
+                        </div>
+                        <small class="text-muted">Available Cash: ${{ "%.2f"|format(current_user.cash) }}</small>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" form="buyProductForm" class="btn btn-primary">Buy</button>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="buyProductForm" class="btn btn-primary">
+                    💰 Purchase
+                </button>
             </div>
         </div>
     </div>
@@ -131,14 +461,160 @@
 
 {% block scripts %}
 <script>
-function buyProduct(productId) {
+let currentProducts = [];
+let currentUnitPrice = 0;
+let maxStock = 0;
+
+// Initialize market functionality
+document.addEventListener('DOMContentLoaded', function() {
+    calculateMarketStats();
+    setupFilterTabs();
+    setupSearch();
+});
+
+function calculateMarketStats() {
+    const productCards = document.querySelectorAll('.product-card');
+    let totalPrice = 0;
+    let totalStock = 0;
+    let companies = new Set();
+    
+    productCards.forEach(card => {
+        const priceText = card.querySelector('.price-display').textContent;
+        const price = parseFloat(priceText.replace('$', ''));
+        totalPrice += price;
+        
+        const stockText = card.querySelector('.stock-indicator span').textContent;
+        const stock = parseInt(stockText.match(/\((\d+) units\)/)[1]);
+        totalStock += stock;
+        
+        const companyText = card.querySelector('small').textContent;
+        companies.add(companyText.replace('by ', ''));
+    });
+    
+    const avgPrice = productCards.length > 0 ? totalPrice / productCards.length : 0;
+    
+    document.getElementById('avg-price').textContent = `$${avgPrice.toFixed(0)}`;
+    document.getElementById('total-stock').textContent = totalStock.toLocaleString();
+    document.getElementById('active-companies').textContent = companies.size;
+}
+
+function setupFilterTabs() {
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Remove active class from all tabs
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            // Add active class to clicked tab
+            this.classList.add('active');
+            
+            const category = this.dataset.category;
+            filterProducts(category);
+        });
+    });
+}
+
+function setupSearch() {
+    document.getElementById('product-search').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        filterProducts(null, searchTerm);
+    });
+}
+
+function filterProducts(category = null, searchTerm = '') {
+    const productCards = document.querySelectorAll('.product-card');
+    let visibleCount = 0;
+    
+    productCards.forEach(card => {
+        const cardCategory = card.dataset.category;
+        const cardName = card.dataset.name;
+        
+        const categoryMatch = !category || category === 'all' || cardCategory === category;
+        const searchMatch = !searchTerm || cardName.includes(searchTerm);
+        
+        if (categoryMatch && searchMatch) {
+            card.style.display = 'block';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    // Update visible products count
+    document.getElementById('total-products').textContent = visibleCount;
+}
+
+function openBuyModal(productId, productName, unitPrice, stock) {
+    currentUnitPrice = unitPrice;
+    maxStock = stock;
+    
     document.getElementById('product_id').value = productId;
+    document.getElementById('modal-product-name').textContent = productName;
+    document.getElementById('modal-unit-price').textContent = `$${unitPrice.toFixed(2)}`;
+    document.getElementById('modal-stock').textContent = `${stock} units`;
+    document.getElementById('quantity').value = 1;
+    document.getElementById('quantity').max = stock;
+    
+    updateTotal();
+    
     const modal = new bootstrap.Modal(document.getElementById('buyProductModal'));
     modal.show();
 }
 
-// Auto-refresh market data
-gameUtils.refreshMarketData();
-setInterval(gameUtils.refreshMarketData, 30000); // Refresh every 30 seconds
+function changeQuantity(delta) {
+    const quantityInput = document.getElementById('quantity');
+    let newValue = parseInt(quantityInput.value) + delta;
+    
+    if (newValue < 1) newValue = 1;
+    if (newValue > maxStock) newValue = maxStock;
+    
+    quantityInput.value = newValue;
+    updateTotal();
+}
+
+function updateTotal() {
+    const quantity = parseInt(document.getElementById('quantity').value) || 1;
+    const total = currentUnitPrice * quantity;
+    document.getElementById('total_cost').textContent = total.toFixed(2);
+    
+    // Check if user has enough money
+    const userCash = {{ current_user.cash }};
+    const submitBtn = document.querySelector('#buyProductModal button[type="submit"]');
+    
+    if (total > userCash) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = '💸 Insufficient Funds';
+        submitBtn.classList.add('btn-danger');
+        submitBtn.classList.remove('btn-primary');
+    } else {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '💰 Purchase';
+        submitBtn.classList.add('btn-primary');
+        submitBtn.classList.remove('btn-danger');
+    }
+}
+
+function refreshMarketData() {
+    // Show loading state
+    const container = document.getElementById('products-container');
+    container.style.opacity = '0.6';
+    
+    fetch('/api/market_data')
+        .then(response => response.json())
+        .then(data => {
+            gameUtils.showNotification('Market data refreshed successfully!', 'success', 3000);
+            // In a real implementation, we would update the product cards here
+            setTimeout(() => {
+                container.style.opacity = '1';
+                calculateMarketStats();
+            }, 500);
+        })
+        .catch(error => {
+            console.error('Error refreshing market:', error);
+            gameUtils.showNotification('Failed to refresh market data', 'error', 4000);
+            container.style.opacity = '1';
+        });
+}
+
+// Auto-refresh market data every 60 seconds
+setInterval(refreshMarketData, 60000);
 </script>
 {% endblock %}

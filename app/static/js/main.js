@@ -37,6 +37,13 @@ function initializeApp() {
     
     // Set up mobile touch handlers
     setupTouchHandlers();
+    
+    // Add modern enhancements
+    enhanceFormSubmission();
+    addSmoothTransitions();
+    
+    // Initialize performance monitoring
+    initializePerformanceMonitoring();
 }
 
 function initializeTooltips() {
@@ -307,20 +314,101 @@ function formatNumber(num) {
     return num.toString();
 }
 
-// Show loading spinner with accessibility
-function showLoading(elementId) {
+// Modern loading spinner with better UX
+function showModernLoading(elementId, message = 'Loading...') {
     const element = document.getElementById(elementId);
     if (element) {
-        element.innerHTML = '<div class="spinner-border spinner-border-sm" role="status" aria-label="Loading"><span class="visually-hidden">Loading...</span></div>';
+        element.innerHTML = `
+            <div class="d-flex flex-column align-items-center justify-content-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mb-0">${message}</p>
+            </div>
+        `;
         element.setAttribute('aria-busy', 'true');
+        element.style.opacity = '0.8';
     }
 }
 
-function hideLoading(elementId) {
+function hideModernLoading(elementId) {
     const element = document.getElementById(elementId);
     if (element) {
         element.removeAttribute('aria-busy');
+        element.style.opacity = '1';
     }
+}
+
+// Enhanced form submission with loading states
+function enhanceFormSubmission() {
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+            if (submitButton && !submitButton.disabled) {
+                const originalText = submitButton.innerHTML;
+                submitButton.disabled = true;
+                submitButton.innerHTML = `
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Processing...
+                `;
+                
+                // Re-enable button after 5 seconds as fallback
+                setTimeout(() => {
+                    if (submitButton.disabled) {
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = originalText;
+                    }
+                }, 5000);
+            }
+        });
+    });
+}
+
+// Smooth transitions for page elements
+function addSmoothTransitions() {
+    document.querySelectorAll('.card, .btn, .alert').forEach(element => {
+        element.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+    });
+}
+
+// Modern data refresh with visual feedback
+function refreshWithFeedback(url, containerId, successMessage = 'Data updated successfully') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    // Add loading state
+    showModernLoading(containerId, 'Fetching latest data...');
+    
+    return fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            hideModernLoading(containerId);
+            showNotification(successMessage, 'success', 3000);
+            return data;
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="mb-3">
+                        <span style="font-size: 3rem; opacity: 0.3;">⚠️</span>
+                    </div>
+                    <h6 class="text-muted">Unable to load data</h6>
+                    <p class="text-muted mb-3">Please check your connection and try again</p>
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshWithFeedback('${url}', '${containerId}')">
+                        🔄 Retry
+                    </button>
+                </div>
+            `;
+            showNotification('Failed to load data. Please try again.', 'error', 4000);
+            hideModernLoading(containerId);
+            throw error;
+        });
 }
 
 // Market data refresh with better error handling
@@ -379,30 +467,61 @@ function updateMarketDisplay(marketData) {
     container.innerHTML = html;
 }
 
-// Enhanced notification system with accessibility
+// Enhanced notification system with modern toasts
 function showNotification(message, type = 'info', duration = 5000) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.setAttribute('role', 'alert');
-    alertDiv.setAttribute('aria-live', 'polite');
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close notification"></button>
+    // Create toast container if it doesn't exist
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Create toast element
+    const toastId = 'toast-' + Date.now();
+    const iconMap = {
+        'success': '✅',
+        'error': '❌',
+        'warning': '⚠️',
+        'info': 'ℹ️'
+    };
+    
+    const toast = document.createElement('div');
+    toast.className = `toast show`;
+    toast.id = toastId;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="toast-header bg-${type} text-white">
+            <span class="me-2">${iconMap[type] || 'ℹ️'}</span>
+            <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            ${message}
+        </div>
     `;
     
-    const container = document.querySelector('.container');
-    container.insertBefore(alertDiv, container.firstChild);
+    toastContainer.appendChild(toast);
     
     // Auto-dismiss after specified duration
     setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.classList.remove('show');
-            setTimeout(() => alertDiv.remove(), 150);
+        if (toast.parentNode) {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
         }
     }, duration);
     
     // Announce to screen readers
     announceToScreenReader(`${type} notification: ${message}`);
+    
+    return toast;
 }
 
 // Accessible confirm dialog
@@ -485,14 +604,98 @@ window.addEventListener('resize', function() {
     }
 });
 
-// Export functions for global use
+// Performance monitoring for better UX
+function initializePerformanceMonitoring() {
+    // Monitor page load performance
+    window.addEventListener('load', function() {
+        const loadTime = performance.now();
+        console.log(`Page loaded in ${loadTime.toFixed(2)}ms`);
+        
+        // Show performance notification for slow loads
+        if (loadTime > 3000) {
+            showNotification('Page loaded slowly. Consider refreshing if you experience issues.', 'warning', 6000);
+        }
+    });
+    
+    // Monitor API call performance
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+        const startTime = performance.now();
+        return originalFetch.apply(this, args)
+            .then(response => {
+                const endTime = performance.now();
+                const duration = endTime - startTime;
+                
+                if (duration > 2000) {
+                    console.warn(`Slow API call detected: ${args[0]} took ${duration.toFixed(2)}ms`);
+                }
+                
+                return response;
+            });
+    };
+}
+
+// Modern confirmation dialogs
+function modernConfirm(title, message, confirmText = 'Confirm', cancelText = 'Cancel') {
+    return new Promise((resolve) => {
+        // Create modal HTML
+        const modalHtml = `
+            <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title fw-bold">${title}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-0">${message}</p>
+                        </div>
+                        <div class="modal-footer border-0">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">${cancelText}</button>
+                            <button type="button" class="btn btn-primary" id="confirmBtn">${confirmText}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        const existingModal = document.getElementById('confirmModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to DOM
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        
+        // Handle confirmation
+        document.getElementById('confirmBtn').addEventListener('click', function() {
+            modal.hide();
+            resolve(true);
+        });
+        
+        // Handle cancellation
+        document.getElementById('confirmModal').addEventListener('hidden.bs.modal', function() {
+            this.remove();
+            resolve(false);
+        });
+        
+        modal.show();
+    });
+}
+
+// Export enhanced functions for global use
 window.gameUtils = {
     formatCurrency,
     formatNumber,
     showNotification,
-    confirmAction,
+    confirmAction: modernConfirm,
     updateGameData,
     refreshMarketData,
     announceToScreenReader,
-    validateField
+    validateField,
+    showModernLoading,
+    hideModernLoading,
+    refreshWithFeedback
 };
