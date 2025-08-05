@@ -1,0 +1,123 @@
+/* IMPERIJUM Game Styles */
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: none;
+    margin-bottom: 1rem;
+}
+
+.card-header {
+    background-color: #007bff;
+    color: white;
+    font-weight: 600;
+}
+
+.jumbotron {
+    border-radius: 10px;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+.progress {
+    height: 10px;
+}
+
+.badge {
+    font-size: 0.9rem;
+}
+
+/* Company sector colors */
+.sector-raw_materials {
+    border-left: 4px solid #dc3545;
+}
+
+.sector-manufacturing {
+    border-left: 4px solid #ffc107;
+}
+
+.sector-retail {
+    border-left: 4px solid #28a745;
+}
+
+/* Stock price indicators */
+.price-up {
+    color: #28a745;
+}
+
+.price-down {
+    color: #dc3545;
+}
+
+.price-stable {
+    color: #6c757d;
+}
+
+/* Market tables */
+.market-table {
+    font-size: 0.9rem;
+}
+
+.market-table th {
+    background-color: #e9ecef;
+}
+
+/* Dashboard widgets */
+.stats-widget {
+    text-align: center;
+    padding: 20px;
+}
+
+.stats-widget h3 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.stats-widget p {
+    margin: 0;
+    color: #6c757d;
+}
+
+/* Turn indicator */
+.turn-indicator {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    z-index: 1000;
+}
+
+/* Company cards */
+.company-card {
+    transition: transform 0.2s;
+}
+
+.company-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 10px;
+    }
+    
+    .navbar-nav {
+        text-align: center;
+    }
+    
+    .card {
+        margin-bottom: 0.5rem;
+    }
+}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Create Company - IMPERIJUM{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Create New Company</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Company Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="sector" class="form-label">Business Sector</label>
+                        <select class="form-select" id="sector" name="sector" required>
+                            <option value="">Choose a sector...</option>
+                            <option value="raw_materials">Raw Materials</option>
+                            <option value="manufacturing">Manufacturing</option>
+                            <option value="retail">Retail</option>
+                        </select>
+                        <div class="form-text">
+                            <strong>Raw Materials:</strong> Extract and produce basic resources<br>
+                            <strong>Manufacturing:</strong> Process raw materials into products<br>
+                            <strong>Retail:</strong> Sell products to consumers
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="initial_investment" class="form-label">Initial Investment</label>
+                        <input type="number" class="form-control" id="initial_investment" name="initial_investment" 
+                               min="1000" max="{{ current_user.cash }}" step="100" value="10000" required>
+                        <div class="form-text">Available cash: ${{ "%.2f"|format(current_user.cash) }}</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('game.companies') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Create Company</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

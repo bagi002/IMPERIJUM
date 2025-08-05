@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Market - IMPERIJUM{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Product Market</h5>
+                <button class="btn btn-outline-primary btn-sm" onclick="gameUtils.refreshMarketData()">
+                    Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped market-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Company</th>
+                                <th>Market Price</th>
+                                <th>Stock</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ product.category|title }}</span>
+                                </td>
+                                <td>{{ product.company.name }}</td>
+                                <td class="fw-bold">${{ "%.2f"|format(product.market_price) }}</td>
+                                <td>{{ product.stock_quantity }}</td>
+                                <td>
+                                    {% if product.stock_quantity > 0 %}
+                                    <button class="btn btn-success btn-sm" onclick="buyProduct({{ product.id }})">
+                                        Buy
+                                    </button>
+                                    {% else %}
+                                    <span class="text-muted">Out of Stock</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6>Recent Transactions</h6>
+            </div>
+            <div class="card-body">
+                {% if transactions %}
+                <div class="list-group list-group-flush">
+                    {% for transaction in transactions %}
+                    <div class="list-group-item p-2">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ transaction.product.name }}</h6>
+                            <small>{{ transaction.transaction_date.strftime('%H:%M') }}</small>
+                        </div>
+                        <p class="mb-1">
+                            <small>{{ transaction.quantity }} units @ ${{ "%.2f"|format(transaction.price_per_unit) }}</small>
+                        </p>
+                        <small class="text-muted">
+                            {{ transaction.seller_company.name }} → 
+                            {% if transaction.buyer_company %}{{ transaction.buyer_company.name }}{% else %}Market{% endif %}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No recent transactions</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6>Market Summary</h6>
+            </div>
+            <div class="card-body">
+                <div id="market-data">
+                    <div class="text-center">
+                        <div class="spinner-border spinner-border-sm" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Buy Product Modal -->
+<div class="modal fade" id="buyProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Buy Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="buyProductForm" method="POST" action="/game/buy_product">
+                    <input type="hidden" id="product_id" name="product_id">
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <p>Total Cost: $<span id="total_cost">0.00</span></p>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="buyProductForm" class="btn btn-primary">Buy</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function buyProduct(productId) {
+    document.getElementById('product_id').value = productId;
+    const modal = new bootstrap.Modal(document.getElementById('buyProductModal'));
+    modal.show();
+}
+
+// Auto-refresh market data
+gameUtils.refreshMarketData();
+setInterval(gameUtils.refreshMarketData, 30000); // Refresh every 30 seconds
+</script>
+{% endblock %}
