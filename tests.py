@@ -57,8 +57,8 @@ class BasicTestCase(unittest.TestCase):
         response = self.client.post('/auth/register', data={
             'username': 'newuser',
             'email': 'new@example.com',
-            'password': 'testpass',
-            'password2': 'testpass'
+            'password': 'testpass123',
+            'password2': 'testpass123'
         }, follow_redirects=True)
         
         self.assertEqual(response.status_code, 200)

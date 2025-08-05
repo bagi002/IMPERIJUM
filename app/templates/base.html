@@ -2,57 +2,99 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="description" content="{% block description %}IMPERIJUM - A sophisticated web-based economic simulation game where players build business empires and compete in dynamic markets.{% endblock %}">
+    <meta name="author" content="IMPERIJUM">
+    <meta name="theme-color" content="#007bff">
+    
     <title>{% block title %}IMPERIJUM - Economic Simulation Game{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" 
+          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="{{ url_for('static', filename='css/style.css') }}" as="style">
+    
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="sr-only">Skip to main content</a>
+    
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" role="navigation" aria-label="Main navigation">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.index') }}">IMPERIJUM</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}" aria-label="IMPERIJUM Home">IMPERIJUM</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav me-auto" role="menubar">
                     {% if current_user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('game.dashboard') }}">Dashboard</a>
+                    <li class="nav-item" role="none">
+                        <a class="nav-link" href="{{ url_for('game.dashboard') }}" role="menuitem" aria-label="Dashboard">
+                            <span aria-hidden="true">📊</span> Dashboard
+                        </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('game.companies') }}">Companies</a>
+                    <li class="nav-item" role="none">
+                        <a class="nav-link" href="{{ url_for('game.companies') }}" role="menuitem" aria-label="Companies">
+                            <span aria-hidden="true">🏢</span> Companies
+                        </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('game.market') }}">Market</a>
+                    <li class="nav-item" role="none">
+                        <a class="nav-link" href="{{ url_for('game.market') }}" role="menuitem" aria-label="Market">
+                            <span aria-hidden="true">📈</span> Market
+                        </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('game.workers') }}">Workers</a>
+                    <li class="nav-item" role="none">
+                        <a class="nav-link" href="{{ url_for('game.workers') }}" role="menuitem" aria-label="Workers">
+                            <span aria-hidden="true">👥</span> Workers
+                        </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('game.stock_exchange') }}">Stock Exchange</a>
+                    <li class="nav-item" role="none">
+                        <a class="nav-link" href="{{ url_for('game.stock_exchange') }}" role="menuitem" aria-label="Stock Exchange">
+                            <span aria-hidden="true">📊</span> Stock Exchange
+                        </a>
                     </li>
                     {% endif %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.leaderboard') }}">Leaderboard</a>
+                    <li class="nav-item" role="none">
+                        <a class="nav-link" href="{{ url_for('main.leaderboard') }}" role="menuitem" aria-label="Leaderboard">
+                            <span aria-hidden="true">🏆</span> Leaderboard
+                        </a>
                     </li>
                 </ul>
-                <ul class="navbar-nav">
+                <ul class="navbar-nav" role="menubar">
                     {% if current_user.is_authenticated %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            {{ current_user.username }} (${{ "%.2f"|format(current_user.cash) }})
+                    <li class="nav-item dropdown" role="none">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true"
+                           aria-label="User menu for {{ current_user.username }}">
+                            <span aria-hidden="true">👤</span> {{ current_user.username }} (${{ "%.2f"|format(current_user.cash) }})
                         </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}" role="menuitem">
+                                <span aria-hidden="true">⚙️</span> Profile
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}" role="menuitem">
+                                <span aria-hidden="true">🚪</span> Logout
+                            </a></li>
                         </ul>
                     </li>
                     {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+                    <li class="nav-item" role="none">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}" role="menuitem" aria-label="Login">
+                            <span aria-hidden="true">🔑</span> Login
+                        </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.register') }}">Register</a>
+                    <li class="nav-item" role="none">
+                        <a class="nav-link" href="{{ url_for('auth.register') }}" role="menuitem" aria-label="Register">
+                            <span aria-hidden="true">📝</span> Register
+                        </a>
                     </li>
                     {% endif %}
                 </ul>
@@ -60,23 +102,55 @@
         </div>
     </nav>
 
-    <main class="container mt-4">
-        {% with messages = get_flashed_messages() %}
+    <main class="container mt-4" id="main-content" tabindex="-1">
+        <!-- Flash messages with improved accessibility -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
-            {% for message in messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" 
+             role="alert" aria-live="polite">
+            <strong>
+                {% if category == 'error' %}
+                    <span aria-hidden="true">❌</span> Error:
+                {% elif category == 'success' %}
+                    <span aria-hidden="true">✅</span> Success:
+                {% else %}
+                    <span aria-hidden="true">ℹ️</span> Info:
+                {% endif %}
+            </strong>
             {{ message }}
-            {% endfor %}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
+        {% endfor %}
         {% endif %}
         {% endwith %}
 
         {% block content %}{% endblock %}
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Footer for better structure and accessibility -->
+    <footer class="mt-5 py-4 bg-light text-center text-muted">
+        <div class="container">
+            <small>&copy; 2024 IMPERIJUM. All rights reserved. | 
+            <a href="#" aria-label="Privacy Policy">Privacy</a> | 
+            <a href="#" aria-label="Terms of Service">Terms</a></small>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" 
+            integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block scripts %}{% endblock %}
+    
+    <!-- Service Worker for progressive web app features -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                // Uncomment when ready to implement service worker
+                // navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
 </body>
 </html>
