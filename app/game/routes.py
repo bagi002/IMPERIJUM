@@ -192,10 +192,53 @@ def buy_stock():
     flash(f'Purchased {shares} shares of {company.name}')
     return redirect(url_for('game.stock_exchange'))
 
+@bp.route('/buy_product', methods=['POST'])
+@login_required
+def buy_product():
+    """Buy a product from the market"""
+    product_id = int(request.form['product_id'])
+    quantity = int(request.form['quantity'])
+    
+    product = Product.query.get_or_404(product_id)
+    total_cost = product.market_price * quantity
+    
+    if current_user.cash < total_cost:
+        flash('Insufficient funds', 'error')
+        return redirect(url_for('game.market'))
+    
+    if quantity > product.stock_quantity:
+        flash('Not enough stock available', 'error')
+        return redirect(url_for('game.market'))
+    
+    # Create market transaction
+    transaction = Market(
+        product_id=product_id,
+        buyer_company_id=None,  # Direct player purchase
+        seller_company_id=product.company_id,
+        quantity=quantity,
+        price_per_unit=product.market_price,
+        total_amount=total_cost
+    )
+    
+    # Update player cash and product stock
+    current_user.cash -= total_cost
+    product.stock_quantity -= quantity
+    
+    # Update seller company cash
+    product.company.cash += total_cost
+    
+    db.session.add(transaction)
+    db.session.commit()
+    
+    flash(f'Successfully purchased {quantity} units of {product.name} for ${total_cost:.2f}', 'success')
+    return redirect(url_for('game.market'))
+
 @bp.route('/next_turn', methods=['POST'])
 @login_required
 def next_turn():
     """Player indicates ready for next turn"""
+    from app.market_engine import MarketEngine
+    
     game_state = GameState.query.first()
     if not game_state:
         game_state = GameState()
@@ -206,13 +249,22 @@ def next_turn():
     total_players = User.query.filter_by(is_ai=False).count()
     
     if game_state.players_ready >= total_players:
-        # All players ready, advance turn
+        # All players ready, advance turn and process market
         game_state.current_turn += 1
         game_state.players_ready = 0
-        # Process turn logic here (AI moves, market updates, etc.)
-        flash(f'Turn {game_state.current_turn} started!')
+        
+        # Process economic turn using market engine
+        turn_results = MarketEngine.process_turn()
+        
+        # Create summary for players
+        price_changes = len(turn_results['price_changes'])
+        significant_changes = len([p for p in turn_results['price_changes'] 
+                                 if abs(p['change_percent']) > 5])
+        
+        flash(f'Turn {game_state.current_turn} completed! '
+              f'{price_changes} products updated, {significant_changes} significant price changes.', 'success')
     else:
-        flash(f'Waiting for {total_players - game_state.players_ready} more players')
+        flash(f'Waiting for {total_players - game_state.players_ready} more players', 'info')
     
     db.session.commit()
     return redirect(url_for('game.dashboard'))

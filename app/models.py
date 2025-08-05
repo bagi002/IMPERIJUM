@@ -87,6 +87,45 @@ class Company(db.Model):
     
     def get_monthly_profit(self):
         return self.monthly_revenue - self.monthly_expenses
+    
+    def calculate_valuation(self):
+        """Calculate comprehensive company valuation based on multiple factors"""
+        # Base valuation on cash and assets
+        base_value = self.cash
+        
+        # Add value from products and inventory
+        product_value = sum([p.stock_quantity * p.market_price for p in self.products])
+        base_value += product_value
+        
+        # Revenue multiplier based on sector
+        sector_multipliers = {
+            'raw_materials': 3.0,
+            'manufacturing': 4.0,
+            'retail': 2.5
+        }
+        
+        multiplier = sector_multipliers.get(self.sector, 3.0)
+        revenue_value = self.monthly_revenue * multiplier
+        
+        # Reputation factor (0.5 to 1.5 multiplier)
+        reputation_factor = 0.5 + (self.reputation / 100.0)
+        
+        # Employee value (skilled workforce adds value)
+        employee_value = sum([e.salary * 0.5 for e in self.employees]) * 12  # Annual salary value
+        
+        total_value = (base_value + revenue_value + employee_value) * reputation_factor
+        return max(total_value, 1000)  # Minimum value of $1000
+    
+    def update_stock_price(self):
+        """Update stock price based on company valuation"""
+        new_valuation = self.calculate_valuation()
+        new_price = new_valuation / self.total_shares
+        
+        # Gradual price adjustment to avoid sudden spikes
+        price_change = (new_price - self.stock_price) * 0.3
+        self.stock_price = max(self.stock_price + price_change, 1.0)  # Minimum $1 per share
+        
+        return self.stock_price
 
 class Worker(db.Model):
     """Worker/Employee pool model"""
@@ -121,6 +160,61 @@ class Product(db.Model):
     monthly_production = db.Column(db.Integer, default=0)
     monthly_demand = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def calculate_supply_demand_ratio(self):
+        """Calculate supply/demand ratio for pricing"""
+        total_supply = Product.query.filter_by(name=self.name).with_entities(
+            db.func.sum(Product.stock_quantity)
+        ).scalar() or 0
+        
+        total_demand = Product.query.filter_by(name=self.name).with_entities(
+            db.func.sum(Product.monthly_demand)
+        ).scalar() or 1
+        
+        return total_supply / max(total_demand, 1)
+    
+    def update_market_price(self, volatility=0.1):
+        """Update market price based on supply and demand"""
+        from config import Config
+        volatility = getattr(Config, 'MARKET_VOLATILITY', 0.1)
+        
+        supply_demand_ratio = self.calculate_supply_demand_ratio()
+        
+        # Price adjustment based on supply/demand
+        # High supply (>1.5) = lower prices
+        # Low supply (<0.5) = higher prices
+        if supply_demand_ratio > 1.5:
+            price_factor = 0.8 + (0.2 * min(supply_demand_ratio / 3.0, 1.0))
+        elif supply_demand_ratio < 0.5:
+            price_factor = 1.2 + (0.8 * (1.0 - supply_demand_ratio * 2))
+        else:
+            price_factor = 1.0
+        
+        # Add random market volatility
+        import random
+        volatility_factor = 1 + random.uniform(-volatility, volatility)
+        
+        new_price = self.base_cost * price_factor * volatility_factor
+        
+        # Gradual price adjustment
+        price_change = (new_price - self.market_price) * 0.4
+        self.market_price = max(self.market_price + price_change, self.base_cost * 0.5)
+        
+        return self.market_price
+    
+    def get_demand_level(self):
+        """Get textual representation of demand level"""
+        ratio = self.calculate_supply_demand_ratio()
+        if ratio > 2.0:
+            return "Very Low"
+        elif ratio > 1.5:
+            return "Low"
+        elif ratio > 0.8:
+            return "Moderate"
+        elif ratio > 0.5:
+            return "High"
+        else:
+            return "Very High"
 
 class Market(db.Model):
     """Market transactions and pricing"""
