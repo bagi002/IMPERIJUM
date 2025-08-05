@@ -2,49 +2,581 @@
 
 {% block title %}Create Company - IMPERIJUM{% endblock %}
 
+{% block extra_head %}
+<style>
+.create-company-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.sector-selection {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.sector-card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 2rem;
+    border: 3px solid transparent;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.sector-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.sector-card.selected {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.sector-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sector-card.selected::before {
+    opacity: 1;
+}
+
+.sector-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    display: block;
+    text-align: center;
+}
+
+.sector-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.sector-description {
+    color: #4a5568;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.sector-benefits {
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.benefit-item:last-child {
+    margin-bottom: 0;
+}
+
+.benefit-icon {
+    color: #667eea;
+    margin-right: 0.5rem;
+    font-weight: bold;
+}
+
+.form-section {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin: 2rem 0;
+}
+
+.investment-slider {
+    margin: 2rem 0;
+}
+
+.slider-track {
+    background: #e2e8f0;
+    height: 8px;
+    border-radius: 20px;
+    position: relative;
+    margin: 1rem 0;
+}
+
+.slider-fill {
+    background: linear-gradient(90deg, #48bb78, #38a169);
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.3s ease;
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.investment-display {
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.investment-amount {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #48bb78;
+}
+
+.investment-effect {
+    background: rgba(72, 187, 120, 0.1);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.effect-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.effect-item:last-child {
+    margin-bottom: 0;
+}
+
+.preview-card {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    border-radius: 16px;
+    padding: 2rem;
+    border: 2px solid rgba(102, 126, 234, 0.2);
+    margin: 2rem 0;
+}
+
+.company-preview {
+    text-align: center;
+}
+
+.preview-logo {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 2rem;
+    color: white;
+}
+
+.preview-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+}
+
+.preview-sector {
+    color: #667eea;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .sector-selection {
+        grid-template-columns: 1fr;
+    }
+    
+    .sector-card {
+        padding: 1.5rem;
+    }
+    
+    .sector-icon {
+        font-size: 3rem;
+    }
+    
+    .investment-amount {
+        font-size: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5>Create New Company</h5>
+<!-- Create Company Header -->
+<div class="create-company-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2">🏢 Create Your Company</h1>
+                <p class="mb-0 opacity-75">Build your business empire and dominate the market</p>
             </div>
-            <div class="card-body">
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Company Name</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="sector" class="form-label">Business Sector</label>
-                        <select class="form-select" id="sector" name="sector" required>
-                            <option value="">Choose a sector...</option>
-                            <option value="raw_materials">Raw Materials</option>
-                            <option value="manufacturing">Manufacturing</option>
-                            <option value="retail">Retail</option>
-                        </select>
-                        <div class="form-text">
-                            <strong>Raw Materials:</strong> Extract and produce basic resources<br>
-                            <strong>Manufacturing:</strong> Process raw materials into products<br>
-                            <strong>Retail:</strong> Sell products to consumers
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="initial_investment" class="form-label">Initial Investment</label>
-                        <input type="number" class="form-control" id="initial_investment" name="initial_investment" 
-                               min="1000" max="{{ current_user.cash }}" step="100" value="10000" required>
-                        <div class="form-text">Available cash: ${{ "%.2f"|format(current_user.cash) }}</div>
-                    </div>
-                    
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="{{ url_for('game.companies') }}" class="btn btn-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Create Company</button>
-                    </div>
-                </form>
+            <div class="col-md-4 text-end">
+                <div class="text-light">
+                    <small>Available Capital</small>
+                    <div class="h4 mb-0">${{ "%.0f"|format(current_user.cash) }}</div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<div class="container">
+    <form method="POST" id="create-company-form">
+        <!-- Company Name Section -->
+        <div class="form-section">
+            <h4 class="mb-3">💼 Company Details</h4>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-bold">Company Name</label>
+                        <input type="text" class="form-control form-control-lg" id="name" name="name" 
+                               placeholder="Enter your company name..." required>
+                        <div class="form-text">Choose a unique and memorable name for your business</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="preview-card">
+                        <div class="company-preview">
+                            <div class="preview-logo" id="preview-logo">🏢</div>
+                            <div class="preview-name" id="preview-name">Your Company</div>
+                            <div class="preview-sector" id="preview-sector">Select Sector</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sector Selection -->
+        <div class="form-section">
+            <h4 class="mb-4">🎯 Choose Your Business Sector</h4>
+            <div class="sector-selection">
+                <div class="sector-card" data-sector="raw_materials">
+                    <input type="radio" name="sector" value="raw_materials" id="sector_raw" style="display: none;">
+                    <div class="sector-icon">🏭</div>
+                    <div class="sector-title">Raw Materials</div>
+                    <div class="sector-description">
+                        Extract and produce essential resources that fuel the entire economy. Control the supply chain from the ground up.
+                    </div>
+                    <div class="sector-benefits">
+                        <div class="benefit-item">
+                            <span class="benefit-icon">✓</span>
+                            <span>High demand from manufacturers</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="benefit-icon">✓</span>
+                            <span>Stable long-term profits</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="benefit-icon">✓</span>
+                            <span>Essential market position</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sector-card" data-sector="manufacturing">
+                    <input type="radio" name="sector" value="manufacturing" id="sector_mfg" style="display: none;">
+                    <div class="sector-icon">⚙️</div>
+                    <div class="sector-title">Manufacturing</div>
+                    <div class="sector-description">
+                        Transform raw materials into valuable products. Create complex supply chains and innovative solutions.
+                    </div>
+                    <div class="sector-benefits">
+                        <div class="benefit-item">
+                            <span class="benefit-icon">✓</span>
+                            <span>Value-added production</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="benefit-icon">✓</span>
+                            <span>Diverse product portfolio</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="benefit-icon">✓</span>
+                            <span>Innovation opportunities</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sector-card" data-sector="retail">
+                    <input type="radio" name="sector" value="retail" id="sector_retail" style="display: none;">
+                    <div class="sector-icon">🛒</div>
+                    <div class="sector-title">Retail</div>
+                    <div class="sector-description">
+                        Connect directly with consumers and build strong brand relationships. Maximize margins through market positioning.
+                    </div>
+                    <div class="sector-benefits">
+                        <div class="benefit-item">
+                            <span class="benefit-icon">✓</span>
+                            <span>Direct consumer contact</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="benefit-icon">✓</span>
+                            <span>Brand building potential</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="benefit-icon">✓</span>
+                            <span>Higher profit margins</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Investment Section -->
+        <div class="form-section">
+            <h4 class="mb-4">💰 Initial Investment</h4>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="investment-slider">
+                        <label for="initial_investment" class="form-label fw-bold">Investment Amount</label>
+                        <input type="range" class="form-range" id="initial_investment" name="initial_investment" 
+                               min="1000" max="{{ current_user.cash }}" value="10000" step="1000">
+                        <div class="slider-labels">
+                            <span>$1,000</span>
+                            <span>${{ "%.0f"|format(current_user.cash) }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="investment-display">
+                        <div class="investment-amount" id="investment-display">$10,000</div>
+                        <small class="text-muted">Initial Company Capital</small>
+                    </div>
+
+                    <div class="investment-effect">
+                        <h6 class="fw-bold mb-2">Investment Impact</h6>
+                        <div class="effect-item">
+                            <span>Starting Cash:</span>
+                            <span id="effect-cash">$10,000</span>
+                        </div>
+                        <div class="effect-item">
+                            <span>Initial Stock Price:</span>
+                            <span id="effect-stock">$10.00</span>
+                        </div>
+                        <div class="effect-item">
+                            <span>Company Valuation:</span>
+                            <span id="effect-valuation">$10,000</span>
+                        </div>
+                        <div class="effect-item">
+                            <span>Remaining Cash:</span>
+                            <span id="effect-remaining">${{ "%.0f"|format(current_user.cash - 10000) }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">💡 Investment Tips</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong>Low Investment ($1K-$10K)</strong>
+                                <p class="small text-muted mb-2">Conservative start, slower growth</p>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Medium Investment ($10K-$50K)</strong>
+                                <p class="small text-muted mb-2">Balanced approach, steady expansion</p>
+                            </div>
+                            <div class="mb-0">
+                                <strong>High Investment ($50K+)</strong>
+                                <p class="small text-muted mb-0">Aggressive growth, higher risk/reward</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-section">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="terms-agreement" required>
+                            <label class="form-check-label" for="terms-agreement">
+                                I agree to the business terms and market regulations
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{{ url_for('game.companies') }}" class="btn btn-outline-secondary me-2">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg" id="create-btn" disabled>
+                        🚀 Create Company
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedSector = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    setupSectorSelection();
+    setupInvestmentSlider();
+    setupFormValidation();
+    updateCompanyPreview();
+});
+
+function setupSectorSelection() {
+    document.querySelectorAll('.sector-card').forEach(card => {
+        card.addEventListener('click', function() {
+            // Remove selection from all cards
+            document.querySelectorAll('.sector-card').forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('input[name="sector"]').forEach(input => input.checked = false);
+            
+            // Select this card
+            this.classList.add('selected');
+            const sectorValue = this.dataset.sector;
+            document.getElementById(`sector_${sectorValue.split('_')[0]}`).checked = true;
+            selectedSector = sectorValue;
+            
+            updateCompanyPreview();
+            validateForm();
+        });
+    });
+}
+
+function setupInvestmentSlider() {
+    const slider = document.getElementById('initial_investment');
+    const display = document.getElementById('investment-display');
+    
+    slider.addEventListener('input', function() {
+        const value = parseInt(this.value);
+        display.textContent = `$${value.toLocaleString()}`;
+        
+        // Update investment effects
+        document.getElementById('effect-cash').textContent = `$${value.toLocaleString()}`;
+        document.getElementById('effect-stock').textContent = `$${(value / 1000).toFixed(2)}`;
+        document.getElementById('effect-valuation').textContent = `$${value.toLocaleString()}`;
+        document.getElementById('effect-remaining').textContent = `$${({{ current_user.cash }} - value).toLocaleString()}`;
+        
+        updateCompanyPreview();
+    });
+}
+
+function setupFormValidation() {
+    const nameInput = document.getElementById('name');
+    const termsCheck = document.getElementById('terms-agreement');
+    const createBtn = document.getElementById('create-btn');
+    
+    function validateForm() {
+        const nameValid = nameInput.value.trim().length >= 3;
+        const sectorValid = selectedSector !== null;
+        const termsValid = termsCheck.checked;
+        
+        createBtn.disabled = !(nameValid && sectorValid && termsValid);
+        
+        if (nameValid && sectorValid && termsValid) {
+            createBtn.classList.remove('btn-outline-primary');
+            createBtn.classList.add('btn-primary');
+        } else {
+            createBtn.classList.remove('btn-primary');
+            createBtn.classList.add('btn-outline-primary');
+        }
+    }
+    
+    nameInput.addEventListener('input', function() {
+        updateCompanyPreview();
+        validateForm();
+    });
+    
+    termsCheck.addEventListener('change', validateForm);
+    
+    // Initial validation
+    validateForm();
+    
+    // Make validateForm globally accessible
+    window.validateForm = validateForm;
+}
+
+function updateCompanyPreview() {
+    const nameInput = document.getElementById('name');
+    const previewName = document.getElementById('preview-name');
+    const previewSector = document.getElementById('preview-sector');
+    const previewLogo = document.getElementById('preview-logo');
+    
+    // Update name
+    const companyName = nameInput.value.trim() || 'Your Company';
+    previewName.textContent = companyName;
+    
+    // Update sector
+    if (selectedSector) {
+        const sectorNames = {
+            'raw_materials': 'Raw Materials',
+            'manufacturing': 'Manufacturing',
+            'retail': 'Retail'
+        };
+        
+        const sectorIcons = {
+            'raw_materials': '🏭',
+            'manufacturing': '⚙️',
+            'retail': '🛒'
+        };
+        
+        previewSector.textContent = sectorNames[selectedSector];
+        previewLogo.textContent = sectorIcons[selectedSector];
+    } else {
+        previewSector.textContent = 'Select Sector';
+        previewLogo.textContent = '🏢';
+    }
+}
+
+// Form submission enhancement
+document.getElementById('create-company-form').addEventListener('submit', function(e) {
+    const submitBtn = document.getElementById('create-btn');
+    if (!submitBtn.disabled) {
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+        submitBtn.disabled = true;
+    }
+});
+
+// Real-time name validation with visual feedback
+document.getElementById('name').addEventListener('input', function() {
+    const input = this;
+    const value = input.value.trim();
+    
+    // Clear previous validation classes
+    input.classList.remove('is-valid', 'is-invalid');
+    
+    if (value.length >= 3) {
+        input.classList.add('is-valid');
+    } else if (value.length > 0) {
+        input.classList.add('is-invalid');
+    }
+});
+</script>
 {% endblock %}
