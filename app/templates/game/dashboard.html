@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - IMPERIJUM{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Game Dashboard</h5>
+                <div>
+                    <span class="badge bg-info">Turn {{ game_state.current_turn }}</span>
+                    <form method="POST" action="{{ url_for('game.next_turn') }}" class="d-inline">
+                        <button type="submit" class="btn btn-success btn-sm">Ready for Next Turn</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Your Companies</h6>
+                        {% if companies %}
+                        <div class="list-group">
+                            {% for company in companies %}
+                            <a href="{{ url_for('game.company_detail', company_id=company.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ company.name }}</h6>
+                                    <small class="text-success">${{ "%.2f"|format(company.cash) }}</small>
+                                </div>
+                                <p class="mb-1">{{ company.sector|title }}</p>
+                                <small>Stock Price: ${{ "%.2f"|format(company.stock_price) }}</small>
+                            </a>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted">You don't own any companies yet.</p>
+                        {% endif %}
+                        <a href="{{ url_for('game.create_company') }}" class="btn btn-primary mt-3">Create New Company</a>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Quick Stats</h6>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Cash:</span>
+                                <strong>${{ "%.2f"|format(current_user.cash) }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Net Worth:</span>
+                                <strong>${{ "%.2f"|format(current_user.get_net_worth()) }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Companies:</span>
+                                <strong>{{ companies|length }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Stock Holdings:</span>
+                                <strong>{{ current_user.stock_holdings.count() }}</strong>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6>Game Status</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Current Turn:</strong> {{ game_state.current_turn }}</p>
+                <p><strong>Players Ready:</strong> {{ game_state.players_ready }}</p>
+                <div class="progress mb-3">
+                    <div class="progress-bar" role="progressbar" style="width: {{ (game_state.players_ready / (game_state.total_players or 1)) * 100 }}%"></div>
+                </div>
+                <a href="{{ url_for('game.market') }}" class="btn btn-outline-primary btn-sm">View Market</a>
+                <a href="{{ url_for('game.stock_exchange') }}" class="btn btn-outline-success btn-sm">Stock Exchange</a>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6>Market Summary</h6>
+            </div>
+            <div class="card-body">
+                <div id="market-summary">
+                    Loading market data...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-refresh dashboard data
+setInterval(function() {
+    fetch('/api/game_state')
+        .then(response => response.json())
+        .then(data => {
+            // Update game state display
+            document.querySelector('.badge').textContent = 'Turn ' + data.current_turn;
+        });
+}, 5000);
+
+// Load market summary
+fetch('/api/market_data')
+    .then(response => response.json())
+    .then(data => {
+        let marketHtml = '<div class="row">';
+        data.slice(0, 5).forEach(product => {
+            marketHtml += `
+                <div class="col-12 mb-2">
+                    <small>${product.name}: $${product.market_price.toFixed(2)}</small>
+                </div>
+            `;
+        });
+        marketHtml += '</div>';
+        document.getElementById('market-summary').innerHTML = marketHtml;
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="jumbotron bg-primary text-white p-5 rounded">
+    <h1 class="display-4">Welcome to IMPERIJUM</h1>
+    <p class="lead">A sophisticated economic simulation game where you build business empires, manage resources, and compete in dynamic markets.</p>
+    {% if not current_user.is_authenticated %}
+    <a class="btn btn-light btn-lg" href="{{ url_for('auth.register') }}" role="button">Start Playing</a>
+    {% endif %}
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">🏭 Build Companies</h5>
+                <p class="card-text">Create companies in three sectors: raw materials, manufacturing, and retail. Each sector plays a crucial role in the economy.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">📈 Trade & Invest</h5>
+                <p class="card-text">Buy and sell products, trade company stocks, and make strategic investments to grow your business empire.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">👥 Manage Workforce</h5>
+                <p class="card-text">Hire skilled workers, manage salaries, and compete for the best talent to boost your company's performance.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Game Features</h5>
+                <ul>
+                    <li>Multi-player real-time economy simulation</li>
+                    <li>AI-powered NPC competitors</li>
+                    <li>Dynamic market pricing based on supply and demand</li>
+                    <li>Stock exchange for company shares</li>
+                    <li>Banking system with loans and credit</li>
+                    <li>Turn-based strategic gameplay</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">How to Play</h5>
+                <ol>
+                    <li>Register and receive starting capital</li>
+                    <li>Create your first company in any sector</li>
+                    <li>Hire workers and start production</li>
+                    <li>Trade products and expand your business</li>
+                    <li>Invest in stocks and loans strategically</li>
+                    <li>Compete to become the richest player!</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
