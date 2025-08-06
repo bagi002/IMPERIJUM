@@ -118,6 +118,9 @@ python tests.py
 - `GET /api/market_data` - Current market prices and inventory
 - `GET /api/game_state` - Current turn and player status
 - `GET /api/player_stats` - Current player statistics
+- `GET /api/leaderboard` - Player rankings by net worth
+- `GET /api/recent_transactions` - Recent market activity
+- `GET /api/market_summary` - Comprehensive market analytics
 
 ## 🔧 Configuration
 
@@ -184,19 +187,26 @@ python run.py  # Uses SQLite, Flask dev server
 
 ## 📈 Roadmap
 
-### Phase 1 (Current) - Core MVP
+### Phase 1 (Current) - Core MVP ✅
 - [x] User registration and authentication
 - [x] Basic company creation and management
 - [x] Market trading system
 - [x] AI players with automated decisions
 - [x] Leaderboard and player statistics
+- [x] Workforce management system
+- [x] Stock exchange with portfolio tracking
+- [x] Banking and loan system
+- [x] Real-time dashboard updates
+- [x] Enhanced AI decision-making algorithms
 
-### Phase 2 - Enhanced Features
-- [ ] Complete workforce management
-- [ ] Stock exchange with real-time trading
-- [ ] Banking and loan system
-- [ ] Advanced AI strategies
-- [ ] Real-time notifications
+### Phase 2 - Enhanced Features 🚧
+- [x] Complete workforce management
+- [x] Stock exchange with real-time trading
+- [x] Banking and loan system
+- [x] Advanced AI strategies
+- [ ] Real-time WebSocket notifications
+- [ ] Company production automation
+- [ ] Market events and news system
 
 ### Phase 3 - Advanced Systems
 - [ ] Company mergers and acquisitions
