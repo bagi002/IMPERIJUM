@@ -2,7 +2,7 @@ from flask import jsonify, request
 from flask_login import login_required, current_user
 from app import db
 from app.api import bp
-from app.models import Company, Product, Market, Worker, GameState
+from app.models import Company, Product, Market, Worker, GameState, User, StockHolding
 
 @bp.route('/companies')
 @login_required
@@ -33,9 +33,51 @@ def api_market_data():
             'category': product.category,
             'market_price': product.market_price,
             'stock_quantity': product.stock_quantity,
-            'company_name': product.company.name
+            'company_name': product.company.name,
+            'demand_level': product.get_demand_level(),
+            'supply_demand_ratio': product.calculate_supply_demand_ratio()
         })
     return jsonify(products)
+
+@bp.route('/leaderboard')
+def api_leaderboard():
+    """API endpoint for player leaderboard"""
+    players = User.query.filter_by(is_ai=False).all()
+    
+    leaderboard = []
+    for player in players:
+        leaderboard.append({
+            'username': player.username,
+            'cash': player.cash,
+            'net_worth': player.get_net_worth(),
+            'company_count': player.companies.count(),
+            'total_revenue': sum([company.monthly_revenue for company in player.companies])
+        })
+    
+    # Sort by net worth descending
+    leaderboard.sort(key=lambda x: x['net_worth'], reverse=True)
+    return jsonify(leaderboard)
+
+@bp.route('/recent_transactions')
+@login_required
+def api_recent_transactions():
+    """API endpoint for recent market transactions"""
+    transactions = Market.query.order_by(Market.transaction_date.desc()).limit(20).all()
+    
+    transaction_data = []
+    for transaction in transactions:
+        transaction_data.append({
+            'id': transaction.id,
+            'product_name': transaction.product.name,
+            'quantity': transaction.quantity,
+            'price_per_unit': transaction.price_per_unit,
+            'total_amount': transaction.total_amount,
+            'buyer': transaction.buyer_company.name if transaction.buyer_company else 'Player',
+            'seller': transaction.seller_company.name,
+            'date': transaction.transaction_date.isoformat()
+        })
+    
+    return jsonify(transaction_data)
 
 @bp.route('/game_state')
 @login_required

@@ -60,6 +60,11 @@
                             <span aria-hidden="true">📊</span> Stock Exchange
                         </a>
                     </li>
+                    <li class="nav-item" role="none">
+                        <a class="nav-link" href="{{ url_for('game.banking') }}" role="menuitem" aria-label="Banking">
+                            <span aria-hidden="true">🏦</span> Banking
+                        </a>
+                    </li>
                     {% endif %}
                     <li class="nav-item" role="none">
                         <a class="nav-link" href="{{ url_for('main.leaderboard') }}" role="menuitem" aria-label="Leaderboard">
@@ -144,6 +149,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" 
             integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/imperijum.js') }}"></script>
     {% block scripts %}{% endblock %}
     
     <!-- Service Worker for progressive web app features -->
