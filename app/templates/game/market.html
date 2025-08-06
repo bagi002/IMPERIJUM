@@ -335,6 +335,16 @@
                         </span>
                     </div>
                     
+                    <!-- Supply & Demand Indicator -->
+                    <div class="demand-indicator mb-3">
+                        {% set demand_level = product.get_demand_level() %}
+                        {% set demand_class = 'text-danger' if demand_level in ['Very High', 'High'] else 'text-warning' if demand_level == 'Moderate' else 'text-info' %}
+                        <small class="{{ demand_class }} fw-bold">
+                            📊 Demand: {{ demand_level }}
+                            {% if demand_level == 'Very High' %}🔥{% elif demand_level == 'High' %}📈{% elif demand_level == 'Moderate' %}📊{% else %}📉{% endif %}
+                        </small>
+                    </div>
+                    
                     {% if product.stock_quantity > 0 %}
                     <button class="buy-button" onclick="openBuyModal({{ product.id }}, '{{ product.name }}', {{ product.market_price }}, {{ product.stock_quantity }})">
                         💰 Buy Now

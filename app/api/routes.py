@@ -65,3 +65,37 @@ def api_player_stats():
         'companies_count': current_user.companies.count(),
         'stock_holdings_count': current_user.stock_holdings.count()
     })
+
+@bp.route('/market_summary')
+@login_required
+def api_market_summary():
+    """API endpoint for market analytics"""
+    from app.market_engine import MarketEngine
+    return jsonify(MarketEngine.get_market_summary())
+
+@bp.route('/company_analytics/<int:company_id>')
+@login_required
+def api_company_analytics(company_id):
+    """API endpoint for detailed company analytics"""
+    company = Company.query.get_or_404(company_id)
+    if company.owner_id != current_user.id:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    return jsonify({
+        'id': company.id,
+        'name': company.name,
+        'sector': company.sector,
+        'cash': company.cash,
+        'stock_price': company.stock_price,
+        'valuation': company.calculate_valuation(),
+        'monthly_revenue': company.monthly_revenue,
+        'monthly_expenses': company.monthly_expenses,
+        'monthly_profit': company.get_monthly_profit(),
+        'reputation': company.reputation,
+        'employee_count': company.employees.count(),
+        'product_count': company.products.count(),
+        'market_share': {
+            'stock_value': company.get_company_value(),
+            'total_market': sum([c.get_company_value() for c in Company.query.all()])
+        }
+    })

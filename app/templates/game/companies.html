@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block title %}My Companies - IMPERIJUM{% endblock %}
+
+{% block extra_head %}
+<style>
+.companies-header {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 20px;
+}
+
+.company-card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.company-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.company-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #4299e1, #3182ce);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.company-card:hover::before {
+    opacity: 1;
+}
+
+.sector-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sector-raw_materials {
+    background: linear-gradient(135deg, #f56565, #e53e3e);
+    color: white;
+}
+
+.sector-manufacturing {
+    background: linear-gradient(135deg, #ed8936, #c05621);
+    color: white;
+}
+
+.sector-retail {
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    color: white;
+}
+
+.metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.metric-row:last-child {
+    border-bottom: none;
+}
+
+.metric-label {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.metric-value {
+    font-weight: 700;
+}
+
+.positive { color: #48bb78; }
+.negative { color: #f56565; }
+.neutral { color: #4299e1; }
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-company-action {
+    border-radius: 20px;
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.create-company-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-align: center;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.create-company-card:hover {
+    transform: translateY(-5px) scale(1.02);
+}
+
+.portfolio-stats {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Companies Header -->
+<div class="companies-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2">🏢 My Companies</h1>
+                <p class="mb-0 opacity-75">Manage your business empire</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ url_for('game.create_company') }}" class="btn btn-light btn-lg">
+                    <span>➕</span> Create Company
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Portfolio Overview -->
+    {% if companies %}
+    <div class="portfolio-stats">
+        <h5 class="fw-bold mb-3 text-center">📊 Portfolio Overview</h5>
+        <div class="row">
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-value positive">{{ companies|length }}</div>
+                    <div class="stat-label">Companies</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    {% set total_value = companies|sum(attribute='cash') %}
+                    <div class="stat-value neutral">${{ "%.0f"|format(total_value) }}</div>
+                    <div class="stat-label">Total Cash</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    {% set total_market_cap = companies|map('get_company_value')|sum %}
+                    <div class="stat-value positive">${{ "%.0f"|format(total_market_cap) }}</div>
+                    <div class="stat-label">Market Cap</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    {% set total_profit = companies|map('get_monthly_profit')|sum %}
+                    <div class="stat-value {% if total_profit > 0 %}positive{% elif total_profit < 0 %}negative{% else %}neutral{% endif %}">
+                        ${{ "%.0f"|format(total_profit) }}
+                    </div>
+                    <div class="stat-label">Monthly Profit</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Companies Grid -->
+    <div class="row">
+        {% for company in companies %}
+        <div class="col-lg-6 col-md-12">
+            <div class="company-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h4 class="fw-bold mb-1">{{ company.name }}</h4>
+                        <span class="sector-badge sector-{{ company.sector }}">
+                            {% if company.sector == 'raw_materials' %}🏭{% elif company.sector == 'manufacturing' %}⚙️{% else %}🛒{% endif %}
+                            {{ company.sector|replace('_', ' ')|title }}
+                        </span>
+                    </div>
+                    <div class="text-end">
+                        <div class="h5 mb-0 neutral">${{ "%.2f"|format(company.stock_price) }}</div>
+                        <small class="text-muted">Stock Price</small>
+                    </div>
+                </div>
+
+                <div class="company-metrics">
+                    <div class="metric-row">
+                        <span class="metric-label">💰 Cash</span>
+                        <span class="metric-value positive">${{ "%.0f"|format(company.cash) }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">📈 Valuation</span>
+                        <span class="metric-value neutral">${{ "%.0f"|format(company.calculate_valuation()) }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">💼 Monthly Profit</span>
+                        {% set profit = company.get_monthly_profit() %}
+                        <span class="metric-value {% if profit > 0 %}positive{% elif profit < 0 %}negative{% else %}neutral{% endif %}">
+                            ${{ "%.0f"|format(profit) }}
+                        </span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">⭐ Reputation</span>
+                        <span class="metric-value">{{ "%.0f"|format(company.reputation) }}%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">👥 Employees</span>
+                        <span class="metric-value">{{ company.employees.count() }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">📦 Products</span>
+                        <span class="metric-value">{{ company.products.count() }}</span>
+                    </div>
+                </div>
+
+                <div class="action-buttons mt-3">
+                    <a href="{{ url_for('game.company_detail', company_id=company.id) }}" 
+                       class="btn btn-primary btn-company-action">
+                        📊 Details
+                    </a>
+                    <a href="{{ url_for('game.workers') }}" 
+                       class="btn btn-outline-info btn-company-action">
+                        👥 Hire
+                    </a>
+                    <a href="{{ url_for('game.stock_exchange') }}" 
+                       class="btn btn-outline-success btn-company-action">
+                        📈 Trade
+                    </a>
+                    <button class="btn btn-outline-warning btn-company-action" 
+                            onclick="updateCompanyPrice({{ company.id }})">
+                        🔄 Update
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Create New Company Card -->
+        <div class="col-lg-6 col-md-12">
+            <div class="company-card create-company-card" onclick="window.location='{{ url_for('game.create_company') }}'">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">➕</div>
+                <h4 class="fw-bold mb-2">Create New Company</h4>
+                <p class="mb-0 opacity-75">Expand your business empire</p>
+            </div>
+        </div>
+    </div>
+
+    {% if not companies %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <div style="font-size: 6rem; opacity: 0.3; margin-bottom: 2rem;">🏢</div>
+        <h3 class="fw-bold mb-3">No Companies Yet</h3>
+        <p class="text-muted mb-4">Start your business empire by creating your first company!</p>
+        <a href="{{ url_for('game.create_company') }}" class="btn btn-primary btn-lg">
+            <span>🚀</span> Create Your First Company
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="company-card">
+                <h5 class="fw-bold mb-3">⚡ Quick Actions</h5>
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="{{ url_for('game.market') }}" class="btn btn-outline-primary">
+                        📈 Market Trading
+                    </a>
+                    <a href="{{ url_for('game.stock_exchange') }}" class="btn btn-outline-success">
+                        📊 Stock Exchange
+                    </a>
+                    <a href="{{ url_for('game.workers') }}" class="btn btn-outline-info">
+                        👥 Worker Pool
+                    </a>
+                    <a href="{{ url_for('game.dashboard') }}" class="btn btn-outline-secondary">
+                        🏠 Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateCompanyPrice(companyId) {
+    fetch(`/api/company_analytics/${companyId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                gameUtils.showNotification(data.error, 'error', 4000);
+                return;
+            }
+            
+            gameUtils.showNotification(`${data.name} updated - Stock: $${data.stock_price.toFixed(2)}, Valuation: $${Math.round(data.valuation)}`, 'success', 4000);
+            
+            // Refresh the page to show updated values
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        })
+        .catch(error => {
+            console.error('Error updating company:', error);
+            gameUtils.showNotification('Failed to update company data', 'error', 4000);
+        });
+}
+
+// Auto-refresh company data every 60 seconds
+setInterval(() => {
+    window.location.reload();
+}, 60000);
+</script>
+{% endblock %}
