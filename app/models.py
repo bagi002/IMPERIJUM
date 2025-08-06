@@ -257,8 +257,33 @@ class GameState(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     current_turn = db.Column(db.Integer, default=1)
     turn_start_time = db.Column(db.DateTime, default=datetime.utcnow)
+    turn_duration = db.Column(db.Integer, default=300)  # Turn time in seconds (5 minutes default)
     players_ready = db.Column(db.Integer, default=0)
     total_players = db.Column(db.Integer, default=0)
+    is_processing_turn = db.Column(db.Boolean, default=False)
+    auto_advance_turn = db.Column(db.Boolean, default=True)  # Auto-advance when timer expires
     game_paused = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def get_time_remaining(self):
+        """Get remaining time for current turn in seconds"""
+        if self.game_paused or self.is_processing_turn:
+            return self.turn_duration
+        
+        elapsed = (datetime.utcnow() - self.turn_start_time).total_seconds()
+        remaining = max(0, self.turn_duration - elapsed)
+        return int(remaining)
+    
+    def is_turn_expired(self):
+        """Check if current turn has expired"""
+        if self.game_paused or self.is_processing_turn:
+            return False
+        return self.get_time_remaining() <= 0
+    
+    def start_new_turn(self):
+        """Start a new turn"""
+        self.current_turn += 1
+        self.turn_start_time = datetime.utcnow()
+        self.players_ready = 0
+        self.is_processing_turn = False

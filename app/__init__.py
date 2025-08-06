@@ -35,6 +35,9 @@ def create_app(config_name='default'):
     # Import user loader
     from app.auth.forms import load_user
     
+    # Import SocketIO events
+    from app import socketio_events
+    
     return app
 
 from app import models

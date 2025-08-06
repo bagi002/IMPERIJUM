@@ -1,5 +1,6 @@
 from flask import jsonify, request
 from flask_login import login_required, current_user
+from datetime import datetime
 from app import db
 from app.api import bp
 from app.models import Company, Product, Market, Worker, GameState, User, StockHolding
@@ -82,7 +83,7 @@ def api_recent_transactions():
 @bp.route('/game_state')
 @login_required
 def api_game_state():
-    """API endpoint for game state"""
+    """API endpoint for enhanced game state with timer"""
     game_state = GameState.query.first()
     if not game_state:
         game_state = GameState()
@@ -92,8 +93,13 @@ def api_game_state():
     return jsonify({
         'current_turn': game_state.current_turn,
         'players_ready': game_state.players_ready,
-        'total_players': game_state.total_players,
-        'game_paused': game_state.game_paused
+        'total_players': User.query.filter_by(is_ai=False).count(),
+        'is_processing_turn': game_state.is_processing_turn,
+        'game_paused': game_state.game_paused,
+        'turn_duration': game_state.turn_duration,
+        'time_remaining': game_state.get_time_remaining(),
+        'turn_expired': game_state.is_turn_expired(),
+        'auto_advance_turn': game_state.auto_advance_turn
     })
 
 @bp.route('/player_stats')
@@ -140,4 +146,57 @@ def api_company_analytics(company_id):
             'stock_value': company.get_company_value(),
             'total_market': sum([c.get_company_value() for c in Company.query.all()])
         }
+    })
+
+@bp.route('/production_status/<int:company_id>')
+@login_required
+def api_production_status(company_id):
+    """API endpoint for company production status"""
+    company = Company.query.get_or_404(company_id)
+    if company.owner_id != current_user.id:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    from app.production_engine import ProductionEngine
+    production_report = ProductionEngine.get_production_report(company)
+    
+    return jsonify(production_report)
+
+@bp.route('/production_overview')
+@login_required
+def api_production_overview():
+    """API endpoint for all user companies production overview"""
+    companies_production = []
+    
+    for company in current_user.companies:
+        from app.production_engine import ProductionEngine
+        report = ProductionEngine.get_production_report(company)
+        report['company_id'] = company.id
+        report['company_name'] = company.name
+        report['sector'] = company.sector
+        companies_production.append(report)
+    
+    return jsonify({
+        'companies': companies_production,
+        'total_companies': len(companies_production),
+        'active_companies': len([c for c in companies_production if c['status'] == 'active'])
+    })
+
+@bp.route('/market_events')
+@login_required  
+def api_recent_market_events():
+    """API endpoint for recent market events (simulated)"""
+    # In a real implementation, this would query a market_events table
+    # For now, return sample recent events
+    return jsonify({
+        'recent_events': [
+            {
+                'title': 'Market Update',
+                'description': 'Regular market price adjustments based on supply and demand',
+                'type': 'market_update',
+                'impact': 'neutral',
+                'timestamp': datetime.utcnow().isoformat()
+            }
+        ],
+        'events_today': 1,
+        'market_volatility': 'normal'
     })
