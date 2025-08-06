@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Stock Exchange - IMPERIJUM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-chart-line"></i> Available Stocks</h4>
+                </div>
+                <div class="card-body">
+                    {% if companies %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Company</th>
+                                        <th>Sector</th>
+                                        <th>Stock Price</th>
+                                        <th>Available Shares</th>
+                                        <th>Market Value</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for company in companies %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ company.name }}</strong><br>
+                                            <small class="text-muted">Owner: {{ company.owner.username }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge {% if company.sector == 'raw_materials' %}bg-brown{% elif company.sector == 'manufacturing' %}bg-blue{% else %}bg-green{% endif %}">
+                                                {{ company.sector.replace('_', ' ').title() }}
+                                            </span>
+                                        </td>
+                                        <td>${{ "{:.2f}".format(company.stock_price) }}</td>
+                                        <td>{{ "{:,}".format(company.available_shares) }}</td>
+                                        <td>${{ "{:,.0f}".format(company.get_company_value()) }}</td>
+                                        <td>
+                                            {% if company.available_shares > 0 %}
+                                                <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#buyModal{{ company.id }}">
+                                                    Buy
+                                                </button>
+                                            {% else %}
+                                                <small class="text-muted">No shares</small>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No stocks available for trading at the moment.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-briefcase"></i> Your Portfolio</h4>
+                </div>
+                <div class="card-body">
+                    {% if holdings %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Company</th>
+                                        <th>Shares</th>
+                                        <th>Avg. Price</th>
+                                        <th>Current Value</th>
+                                        <th>P&L</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% set total_value = 0 %}
+                                    {% set total_cost = 0 %}
+                                    {% for holding in holdings %}
+                                        {% set current_value = holding.shares * holding.company.stock_price %}
+                                        {% set cost_basis = holding.shares * holding.purchase_price %}
+                                        {% set pl = current_value - cost_basis %}
+                                        {% set pl_percent = (pl / cost_basis * 100) if cost_basis > 0 else 0 %}
+                                        {% set _ = total_value.__add__(current_value) %}
+                                        {% set _ = total_cost.__add__(cost_basis) %}
+                                    <tr>
+                                        <td>{{ holding.company.name }}</td>
+                                        <td>{{ holding.shares }}</td>
+                                        <td>${{ "{:.2f}".format(holding.purchase_price) }}</td>
+                                        <td>${{ "{:,.0f}".format(current_value) }}</td>
+                                        <td class="{% if pl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                            ${{ "{:,.0f}".format(pl) }}<br>
+                                            <small>({{ "{:.1f}".format(pl_percent) }}%)</small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-3">
+                            {% set portfolio_total = holdings|sum(attribute='shares')|multiply(holdings|map(attribute='company')|map(attribute='stock_price')|sum) %}
+                            <div class="row">
+                                <div class="col-6">
+                                    <strong>Portfolio Value:</strong>
+                                </div>
+                                <div class="col-6 text-end">
+                                    ${{ "{:,.0f}".format(total_value) }}
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">You don't own any stocks yet.</p>
+                        <p><small>Start by buying shares of companies to build your portfolio!</small></p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-wallet"></i> Trading Info</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Available Cash:</strong>
+                        </div>
+                        <div class="col-6 text-end">
+                            ${{ "{:,.0f}".format(current_user.cash) }}
+                        </div>
+                    </div>
+                    <hr>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> Trading fee: 1% per transaction
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Buy Stock Modals -->
+{% for company in companies %}
+<div class="modal fade" id="buyModal{{ company.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Buy {{ company.name }} Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('game.buy_stock') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="company_id" value="{{ company.id }}">
+                    
+                    <div class="alert alert-info">
+                        <strong>{{ company.name }}</strong> ({{ company.sector.replace('_', ' ').title() }})<br>
+                        Current Price: ${{ "{:.2f}".format(company.stock_price) }}<br>
+                        Available Shares: {{ "{:,}".format(company.available_shares) }}<br>
+                        Market Cap: ${{ "{:,.0f}".format(company.get_company_value()) }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="shares{{ company.id }}" class="form-label">Number of Shares</label>
+                        <input type="number" class="form-control" name="shares" id="shares{{ company.id }}" 
+                               min="1" max="{{ company.available_shares }}" value="1" required
+                               onchange="updateCost{{ company.id }}()">
+                        <small class="form-text text-muted">Max: {{ "{:,}".format(company.available_shares) }} shares</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Total Cost:</strong>
+                            </div>
+                            <div class="col-6 text-end">
+                                <span id="totalCost{{ company.id }}">${{ "{:.2f}".format(company.stock_price) }}</span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                Trading Fee (1%):
+                            </div>
+                            <div class="col-6 text-end">
+                                <span id="tradingFee{{ company.id }}">${{ "{:.2f}".format(company.stock_price * 0.01) }}</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Total Amount:</strong>
+                            </div>
+                            <div class="col-6 text-end">
+                                <strong><span id="totalAmount{{ company.id }}">${{ "{:.2f}".format(company.stock_price * 1.01) }}</span></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Buy Shares</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateCost{{ company.id }}() {
+    const shares = document.getElementById('shares{{ company.id }}').value || 0;
+    const price = {{ company.stock_price }};
+    const subtotal = shares * price;
+    const fee = subtotal * 0.01;
+    const total = subtotal + fee;
+    
+    document.getElementById('totalCost{{ company.id }}').textContent = '$' + subtotal.toFixed(2);
+    document.getElementById('tradingFee{{ company.id }}').textContent = '$' + fee.toFixed(2);
+    document.getElementById('totalAmount{{ company.id }}').textContent = '$' + total.toFixed(2);
+}
+</script>
+{% endfor %}
+{% endblock %}

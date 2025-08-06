@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Banking - IMPERIJUM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-university"></i> Apply for Loan</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('game.apply_loan') }}">
+                        <div class="mb-3">
+                            <label for="loan_type" class="form-label">Loan Type</label>
+                            <select class="form-select" name="loan_type" id="loan_type" required onchange="updateLoanInfo()">
+                                <option value="">Select loan type</option>
+                                <option value="personal">Personal Loan (for player)</option>
+                                <option value="business">Business Loan (for company)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3" id="company_selection" style="display: none;">
+                            <label for="company_id" class="form-label">Company</label>
+                            <select class="form-select" name="company_id" id="company_id">
+                                <option value="">Select company</option>
+                                {% for company in current_user.companies %}
+                                    <option value="{{ company.id }}">{{ company.name }} - ${{ "{:,.0f}".format(company.cash) }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Loan Amount</label>
+                            <input type="number" class="form-control" name="amount" id="amount" 
+                                   min="1000" max="1000000" step="1000" required onchange="updateLoanInfo()">
+                            <small class="form-text text-muted">Minimum: $1,000 - Maximum: $1,000,000</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="duration" class="form-label">Loan Duration</label>
+                            <select class="form-select" name="duration" id="duration" required onchange="updateLoanInfo()">
+                                <option value="">Select duration</option>
+                                <option value="12">12 months</option>
+                                <option value="24">24 months</option>
+                                <option value="36">36 months</option>
+                                <option value="48">48 months</option>
+                                <option value="60">60 months</option>
+                            </select>
+                        </div>
+                        
+                        <div class="alert alert-info" id="loan_info" style="display: none;">
+                            <h6>Loan Details:</h6>
+                            <div class="row">
+                                <div class="col-6">Interest Rate:</div>
+                                <div class="col-6 text-end"><span id="interest_rate">-</span>%</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">Monthly Payment:</div>
+                                <div class="col-6 text-end">$<span id="monthly_payment">-</span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">Total Repayment:</div>
+                                <div class="col-6 text-end">$<span id="total_repayment">-</span></div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Apply for Loan</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-receipt"></i> Your Loans</h4>
+                </div>
+                <div class="card-body">
+                    {% if current_user.loans.count() > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Remaining</th>
+                                        <th>Rate</th>
+                                        <th>Payment</th>
+                                        <th>Months Left</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for loan in current_user.loans %}
+                                    <tr>
+                                        <td>
+                                            {% if loan.company_id %}
+                                                <span class="badge bg-primary">Business</span><br>
+                                                <small>{{ loan.company.name }}</small>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Personal</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>${{ "{:,.0f}".format(loan.amount) }}</td>
+                                        <td>${{ "{:,.0f}".format(loan.remaining_amount) }}</td>
+                                        <td>{{ "{:.1f}".format(loan.interest_rate * 100) }}%</td>
+                                        <td>${{ "{:,.0f}".format(loan.monthly_payment) }}</td>
+                                        <td>{{ loan.months_remaining }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">You don't have any active loans.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Banking Information</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Interest Rates:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-user"></i> Personal Loans: 5-12% APR</li>
+                        <li><i class="fas fa-building"></i> Business Loans: 3-8% APR</li>
+                    </ul>
+                    
+                    <h6 class="mt-3">Credit Rating Factors:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> Cash reserves</li>
+                        <li><i class="fas fa-check text-success"></i> Company performance</li>
+                        <li><i class="fas fa-check text-success"></i> Payment history</li>
+                        <li><i class="fas fa-check text-success"></i> Debt-to-income ratio</li>
+                    </ul>
+                    
+                    <div class="mt-3">
+                        <strong>Your Credit Rating:</strong>
+                        <span class="badge bg-success">Excellent</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateLoanInfo() {
+    const loanType = document.getElementById('loan_type').value;
+    const amount = parseFloat(document.getElementById('amount').value) || 0;
+    const duration = parseInt(document.getElementById('duration').value) || 0;
+    
+    // Show/hide company selection
+    const companyDiv = document.getElementById('company_selection');
+    if (loanType === 'business') {
+        companyDiv.style.display = 'block';
+        document.getElementById('company_id').required = true;
+    } else {
+        companyDiv.style.display = 'none';
+        document.getElementById('company_id').required = false;
+    }
+    
+    if (amount > 0 && duration > 0) {
+        // Calculate interest rate based on loan type and duration
+        let baseRate = loanType === 'business' ? 0.03 : 0.05;
+        let durationPenalty = (duration - 12) * 0.001; // Higher rate for longer terms
+        let interestRate = baseRate + durationPenalty;
+        
+        // Calculate monthly payment
+        let monthlyRate = interestRate / 12;
+        let monthlyPayment = amount * (monthlyRate * Math.pow(1 + monthlyRate, duration)) / 
+                           (Math.pow(1 + monthlyRate, duration) - 1);
+        let totalRepayment = monthlyPayment * duration;
+        
+        // Update display
+        document.getElementById('interest_rate').textContent = (interestRate * 100).toFixed(1);
+        document.getElementById('monthly_payment').textContent = monthlyPayment.toFixed(0);
+        document.getElementById('total_repayment').textContent = totalRepayment.toFixed(0);
+        document.getElementById('loan_info').style.display = 'block';
+    } else {
+        document.getElementById('loan_info').style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

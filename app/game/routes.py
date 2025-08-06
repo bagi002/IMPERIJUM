@@ -2,7 +2,7 @@ from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.game import bp
-from app.models import User, Company, Product, Market, Worker, Employee, GameState, StockHolding
+from app.models import User, Company, Product, Market, Worker, Employee, GameState, StockHolding, Loan
 
 @bp.route('/dashboard')
 @login_required
@@ -268,3 +268,84 @@ def next_turn():
     
     db.session.commit()
     return redirect(url_for('game.dashboard'))
+
+@bp.route('/banking')
+@login_required
+def banking():
+    """View banking and loan information"""
+    user_loans = current_user.loans.all()
+    return render_template('game/banking.html', loans=user_loans)
+
+@bp.route('/apply_loan', methods=['POST'])
+@login_required
+def apply_loan():
+    """Apply for a personal or business loan"""
+    loan_type = request.form['loan_type']
+    amount = float(request.form['amount'])
+    duration = int(request.form['duration'])
+    
+    # Validate loan amount
+    if amount < 1000 or amount > 1000000:
+        flash('Loan amount must be between $1,000 and $1,000,000', 'error')
+        return redirect(url_for('game.banking'))
+    
+    # Calculate interest rate based on loan type and duration
+    if loan_type == 'business':
+        company_id = int(request.form['company_id'])
+        company = Company.query.get_or_404(company_id)
+        if company.owner_id != current_user.id:
+            flash('Access denied', 'error')
+            return redirect(url_for('game.banking'))
+        
+        base_rate = 0.03  # 3% base rate for business loans
+        # Better companies get better rates
+        reputation_bonus = (100 - company.reputation) * 0.001
+        interest_rate = base_rate + reputation_bonus
+    else:
+        company_id = None
+        base_rate = 0.05  # 5% base rate for personal loans
+        # Player's net worth affects rate
+        net_worth = current_user.get_net_worth()
+        if net_worth > 500000:
+            wealth_bonus = -0.01  # Rich players get better rates
+        elif net_worth < 50000:
+            wealth_bonus = 0.02   # Poor players pay more
+        else:
+            wealth_bonus = 0
+        interest_rate = base_rate + wealth_bonus
+    
+    # Duration penalty
+    duration_penalty = (duration - 12) * 0.001
+    interest_rate += duration_penalty
+    
+    # Ensure reasonable bounds
+    interest_rate = max(0.02, min(0.15, interest_rate))
+    
+    # Calculate monthly payment
+    monthly_rate = interest_rate / 12
+    monthly_payment = amount * (monthly_rate * (1 + monthly_rate) ** duration) / \
+                     ((1 + monthly_rate) ** duration - 1)
+    
+    # Create loan
+    loan = Loan(
+        user_id=current_user.id,
+        company_id=company_id,
+        amount=amount,
+        interest_rate=interest_rate,
+        monthly_payment=monthly_payment,
+        remaining_amount=amount,
+        months_remaining=duration
+    )
+    
+    # Add money to appropriate account
+    if loan_type == 'business':
+        company.cash += amount
+        flash(f'Business loan approved! ${amount:,.0f} added to {company.name}', 'success')
+    else:
+        current_user.cash += amount
+        flash(f'Personal loan approved! ${amount:,.0f} added to your account', 'success')
+    
+    db.session.add(loan)
+    db.session.commit()
+    
+    return redirect(url_for('game.banking'))

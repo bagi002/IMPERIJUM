@@ -84,21 +84,29 @@ class MarketEngine:
     @staticmethod
     def process_turn():
         """Process a complete economic turn"""
-        # 1. Simulate AI demand
+        # 1. Process AI player decisions
+        from app.ai_controller import AIController
+        ai_decisions = AIController.process_ai_turns()
+        
+        # 2. Simulate AI demand
         MarketEngine.simulate_ai_demand()
         
-        # 2. Update product prices
+        # 3. Update product prices
         price_changes = MarketEngine.update_all_prices()
         
-        # 3. Update company valuations
+        # 4. Update company valuations
         valuation_changes = MarketEngine.update_company_valuations()
         
-        # 4. Update companies' monthly performance
+        # 5. Update companies' monthly performance
         MarketEngine.update_company_performance()
+        
+        # 6. Process loan payments
+        MarketEngine.process_loan_payments()
         
         return {
             'price_changes': price_changes,
             'valuation_changes': valuation_changes,
+            'ai_decisions': ai_decisions,
             'timestamp': datetime.utcnow()
         }
     
@@ -133,6 +141,34 @@ class MarketEngine:
                 company.reputation = min(100, company.reputation + 2)
             elif profit_margin < -0.1:
                 company.reputation = max(0, company.reputation - 3)
+        
+        db.session.commit()
+    
+    @staticmethod
+    def process_loan_payments():
+        """Process monthly loan payments for all active loans"""
+        loans = Loan.query.filter(Loan.months_remaining > 0).all()
+        
+        for loan in loans:
+            # Deduct monthly payment
+            if loan.user_id:
+                # Personal loan
+                if loan.borrower.cash >= loan.monthly_payment:
+                    loan.borrower.cash -= loan.monthly_payment
+                    loan.remaining_amount -= (loan.monthly_payment - loan.remaining_amount * loan.interest_rate / 12)
+                    loan.months_remaining -= 1
+                else:
+                    # Missed payment - increase debt slightly
+                    loan.remaining_amount *= 1.02  # 2% penalty
+            elif loan.company_id:
+                # Business loan
+                if loan.company.cash >= loan.monthly_payment:
+                    loan.company.cash -= loan.monthly_payment
+                    loan.remaining_amount -= (loan.monthly_payment - loan.remaining_amount * loan.interest_rate / 12)
+                    loan.months_remaining -= 1
+                else:
+                    # Missed payment
+                    loan.remaining_amount *= 1.02
         
         db.session.commit()
     
