@@ -252,17 +252,29 @@ def next_turn():
         # All players ready, advance turn and process market
         game_state.current_turn += 1
         game_state.players_ready = 0
+        game_state.start_new_turn()  # Use the new method to properly start turn
         
         # Process economic turn using market engine
         turn_results = MarketEngine.process_turn()
         
-        # Create summary for players
+        # Create enhanced summary for players
         price_changes = len(turn_results['price_changes'])
         significant_changes = len([p for p in turn_results['price_changes'] 
                                  if abs(p['change_percent']) > 5])
+        production_count = len(turn_results.get('production_results', []))
+        ai_decisions_count = sum(len(decisions) for decisions in turn_results.get('ai_decisions', {}).values())
         
-        flash(f'Turn {game_state.current_turn} completed! '
-              f'{price_changes} products updated, {significant_changes} significant price changes.', 'success')
+        summary_parts = [f'{price_changes} products updated']
+        if significant_changes > 0:
+            summary_parts.append(f'{significant_changes} significant price changes')
+        if production_count > 0:
+            summary_parts.append(f'{production_count} companies produced goods')
+        if ai_decisions_count > 0:
+            summary_parts.append(f'AI made {ai_decisions_count} decisions')
+        if turn_results.get('market_event'):
+            summary_parts.append(f'Market event: {turn_results["market_event"].title}')
+        
+        flash(f'Turn {game_state.current_turn} completed! ' + ', '.join(summary_parts) + '.', 'success')
     else:
         flash(f'Waiting for {total_players - game_state.players_ready} more players', 'info')
     

@@ -200,8 +200,11 @@
             <div class="col-md-4 text-end">
                 <div class="d-flex align-items-center justify-content-end gap-3">
                     <div class="text-center">
-                        <div class="badge bg-light text-dark px-3 py-2 fs-6">
+                        <div class="badge bg-light text-dark px-3 py-2 fs-6" id="current-turn">
                             Turn {{ game_state.current_turn }}
+                        </div>
+                        <div class="small mt-1">
+                            <span id="time-remaining" class="text-light">⏱️ Loading...</span>
                         </div>
                     </div>
                     <form method="POST" action="{{ url_for('game.next_turn') }}" class="d-inline">
@@ -220,25 +223,25 @@
     <div class="row g-4">
         <div class="col-md-3 col-sm-6">
             <div class="stat-widget">
-                <div class="stat-value">${{ "%.0f"|format(current_user.cash) }}</div>
+                <div class="stat-value" data-stat="cash">${{ "%.0f"|format(current_user.cash) }}</div>
                 <div class="stat-label">Cash Available</div>
             </div>
         </div>
         <div class="col-md-3 col-sm-6">
             <div class="stat-widget">
-                <div class="stat-value">${{ "%.0f"|format(current_user.get_net_worth()) }}</div>
+                <div class="stat-value" data-stat="net_worth">${{ "%.0f"|format(current_user.get_net_worth()) }}</div>
                 <div class="stat-label">Net Worth</div>
             </div>
         </div>
         <div class="col-md-3 col-sm-6">
             <div class="stat-widget">
-                <div class="stat-value">{{ companies|length }}</div>
+                <div class="stat-value" data-stat="companies">{{ companies|length }}</div>
                 <div class="stat-label">Companies</div>
             </div>
         </div>
         <div class="col-md-3 col-sm-6">
             <div class="stat-widget">
-                <div class="stat-value">{{ current_user.stock_holdings.count() }}</div>
+                <div class="stat-value" data-stat="investments">{{ current_user.stock_holdings.count() }}</div>
                 <div class="stat-label">Investments</div>
             </div>
         </div>
@@ -419,18 +422,49 @@ function updateGameState() {
         .then(response => response.json())
         .then(data => {
             // Update turn badge
-            const turnBadges = document.querySelectorAll('.badge');
-            turnBadges.forEach(badge => {
-                if (badge.textContent.includes('Turn')) {
-                    badge.textContent = `Turn ${data.currentTurn}`;
+            const turnElement = document.getElementById('current-turn');
+            if (turnElement) {
+                turnElement.textContent = `Turn ${data.current_turn}`;
+            }
+            
+            // Update time remaining
+            const timeElement = document.getElementById('time-remaining');
+            if (timeElement) {
+                if (data.is_processing_turn) {
+                    timeElement.innerHTML = '⚙️ Processing...';
+                    timeElement.className = 'text-warning small';
+                } else if (data.game_paused) {
+                    timeElement.innerHTML = '⏸️ Paused';
+                    timeElement.className = 'text-muted small';
+                } else {
+                    const minutes = Math.floor(data.time_remaining / 60);
+                    const seconds = data.time_remaining % 60;
+                    const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    if (data.time_remaining <= 30) {
+                        timeElement.innerHTML = `⏰ ${timeStr}`;
+                        timeElement.className = 'text-danger small fw-bold';
+                    } else if (data.time_remaining <= 60) {
+                        timeElement.innerHTML = `⏱️ ${timeStr}`;
+                        timeElement.className = 'text-warning small';
+                    } else {
+                        timeElement.innerHTML = `⏱️ ${timeStr}`;
+                        timeElement.className = 'text-light small';
+                    }
                 }
-            });
+            }
             
             // Update progress bar
             const progressBar = document.querySelector('.progress-bar-modern');
-            if (progressBar && data.totalPlayers > 0) {
-                const percentage = (data.playersReady / data.totalPlayers) * 100;
+            if (progressBar && data.total_players > 0) {
+                const percentage = (data.players_ready / data.total_players) * 100;
                 progressBar.style.width = `${percentage}%`;
+            }
+            
+            // Update player count
+            const playerCountElement = document.getElementById('player-count');
+            if (playerCountElement) {
+                playerCountElement.textContent = `${data.players_ready}/${data.total_players} ready`;
             }
         })
         .catch(error => {
@@ -438,15 +472,50 @@ function updateGameState() {
         });
 }
 
-// Initialize dashboard
-document.addEventListener('DOMContentLoaded', function() {
-    // Load initial market data
+function refreshDashboard() {
     refreshMarketSummary();
     updateGameState();
+    refreshPlayerStats();
+}
+
+function refreshPlayerStats() {
+    fetch('/api/player_stats')
+        .then(response => response.json())
+        .then(data => {
+            // Update cash display
+            const cashElements = document.querySelectorAll('.stat-value[data-stat="cash"]');
+            cashElements.forEach(el => {
+                el.textContent = `$${data.cash.toLocaleString()}`;
+            });
+            
+            // Update net worth
+            const netWorthElements = document.querySelectorAll('.stat-value[data-stat="net_worth"]');
+            netWorthElements.forEach(el => {
+                el.textContent = `$${data.net_worth.toLocaleString()}`;
+            });
+            
+            // Update company count
+            const companyElements = document.querySelectorAll('.stat-value[data-stat="companies"]');
+            companyElements.forEach(el => {
+                el.textContent = data.companies_count;
+            });
+        })
+        .catch(error => {
+            console.log('Player stats update failed:', error);
+        });
+}
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    // Load initial data
+    refreshMarketSummary();
+    updateGameState();
+    refreshPlayerStats();
     
-    // Set up periodic updates
-    marketUpdateInterval = setInterval(refreshMarketSummary, 30000); // Every 30 seconds
-    setInterval(updateGameState, 10000); // Every 10 seconds
+    // Set up periodic updates with different intervals
+    marketUpdateInterval = setInterval(refreshMarketSummary, 20000); // Every 20 seconds
+    setInterval(updateGameState, 5000); // Every 5 seconds for turn timer
+    setInterval(refreshPlayerStats, 15000); // Every 15 seconds for stats
     
     // Add visual feedback for interactions
     document.querySelectorAll('.company-card').forEach(card => {
@@ -458,6 +527,15 @@ document.addEventListener('DOMContentLoaded', function() {
             this.style.transform = 'translateY(0) scale(1)';
         });
     });
+    
+    // Add refresh button handlers
+    const refreshButton = document.querySelector('[onclick="refreshMarketSummary()"]');
+    if (refreshButton) {
+        refreshButton.onclick = function() {
+            refreshDashboard();
+            return false;
+        };
+    }
 });
 
 // Cleanup on page unload

@@ -39,32 +39,39 @@ class AIPlayer:
             # 1. Evaluate current financial position
             self._evaluate_position()
             
-            # 2. Make company decisions
+            # 2. Respond to recent market events
+            market_response = self._respond_to_market_events()
+            decisions.extend(market_response)
+            
+            # 3. Make company decisions
             for company in self.user.companies:
                 company_decisions = self._make_company_decisions(company)
                 decisions.extend(company_decisions)
             
-            # 3. Make investment decisions
+            # 4. Make investment decisions based on personality
             investment_decisions = self._make_investment_decisions()
             decisions.extend(investment_decisions)
             
-            # 4. Make hiring decisions
+            # 5. Make hiring decisions
             hiring_decisions = self._make_hiring_decisions()
             decisions.extend(hiring_decisions)
             
-            # 5. Consider creating new company
+            # 6. Consider creating new company based on market conditions
             if len(self.user.companies) < 3 and self.user.cash > 50000:
                 new_company_decision = self._consider_new_company()
                 if new_company_decision:
                     decisions.append(new_company_decision)
             
-            # 6. Consider loans if cash is low
-            if self.user.cash < 10000:
-                loan_decision = self._consider_loan()
-                if loan_decision:
-                    decisions.append(loan_decision)
+            # 7. Consider loans if cash is low or opportunities exist
+            loan_decision = self._evaluate_loan_opportunities()
+            if loan_decision:
+                decisions.append(loan_decision)
             
-            logger.info(f"AI Player {self.user.username} made {len(decisions)} decisions")
+            # 8. Make strategic decisions based on personality
+            strategic_decisions = self._make_strategic_decisions()
+            decisions.extend(strategic_decisions)
+            
+            logger.info(f"AI Player {self.user.username} ({self.personality}) made {len(decisions)} decisions")
             return decisions
             
         except Exception as e:
@@ -77,38 +84,6 @@ class AIPlayer:
         self.net_worth = self.user.get_net_worth()
         self.company_count = len(self.user.companies)
         self.debt_level = sum([loan.remaining_amount for loan in self.user.loans])
-    
-    def _make_company_decisions(self, company):
-        """Make decisions for a specific company"""
-        decisions = []
-        
-        # Production decisions
-        if company.cash > 5000:
-            # Decide whether to increase production
-            for product in company.products:
-                if product.stock_quantity < 50 and product.get_demand_level() in ['High', 'Very High']:
-                    # Increase production
-                    production_cost = product.base_cost * 20
-                    if company.cash >= production_cost:
-                        product.stock_quantity += 20
-                        company.cash -= production_cost
-                        decisions.append(f"Increased production of {product.name}")
-        
-        # Pricing decisions
-        for product in company.products:
-            demand_level = product.get_demand_level()
-            if demand_level == 'Very High' and product.selling_price < product.market_price * 1.2:
-                # Increase price when demand is very high
-                old_price = product.selling_price
-                product.selling_price = min(product.selling_price * 1.1, product.market_price * 1.2)
-                decisions.append(f"Raised {product.name} price from ${old_price:.2f} to ${product.selling_price:.2f}")
-            elif demand_level == 'Very Low' and product.selling_price > product.base_cost * 1.1:
-                # Lower price when demand is very low
-                old_price = product.selling_price
-                product.selling_price = max(product.selling_price * 0.9, product.base_cost * 1.1)
-                decisions.append(f"Lowered {product.name} price from ${old_price:.2f} to ${product.selling_price:.2f}")
-        
-        return decisions
     
     def _make_investment_decisions(self):
         """Make stock investment decisions"""
@@ -305,6 +280,127 @@ class AIPlayer:
         db.session.add(loan)
         
         return f"Took personal loan of ${loan_amount:.0f} at {interest_rate*100:.1f}% for {duration} months"
+
+    def _respond_to_market_events(self):
+        """Respond to recent market events based on personality"""
+        decisions = []
+        
+        # This would normally check a market events log
+        # For now, simulate responses to market conditions
+        
+        # Get current market conditions
+        products = Product.query.all()
+        volatile_products = [p for p in products if abs(random.uniform(-0.1, 0.1)) > 0.05]
+        
+        for product in volatile_products[:2]:  # Respond to up to 2 market changes
+            if self.personality == 'opportunistic':
+                # Opportunistic AI reacts quickly to price changes
+                if product.get_demand_level() == 'Very High':
+                    decisions.append(f"Opportunistic response: Increasing focus on {product.name} due to high demand")
+            elif self.personality == 'conservative':
+                # Conservative AI avoids volatile markets
+                decisions.append(f"Conservative response: Reducing exposure to volatile {product.name} market")
+            elif self.personality == 'aggressive':
+                # Aggressive AI takes bigger risks during volatility
+                decisions.append(f"Aggressive response: Doubling down on {product.name} volatility")
+        
+        return decisions
+
+    def _make_strategic_decisions(self):
+        """Make personality-based strategic decisions"""
+        decisions = []
+        
+        if self.personality == 'growth':
+            # Growth personality focuses on expansion
+            if self.user.cash > 30000 and len(self.user.companies) < 3:
+                decisions.append("Growth strategy: Preparing for aggressive expansion")
+            
+        elif self.personality == 'value':
+            # Value personality looks for undervalued assets
+            undervalued_stocks = Company.query.filter(
+                Company.stock_price < Company.cash / 100
+            ).limit(3).all()
+            
+            if undervalued_stocks:
+                decisions.append(f"Value strategy: Identified {len(undervalued_stocks)} undervalued investment opportunities")
+        
+        elif self.personality == 'balanced':
+            # Balanced personality maintains diversification
+            sectors = set([c.sector for c in self.user.companies])
+            if len(sectors) < 2 and len(self.user.companies) >= 2:
+                decisions.append("Balanced strategy: Need to diversify across different sectors")
+        
+        return decisions
+
+    def _evaluate_loan_opportunities(self):
+        """Enhanced loan evaluation based on opportunities"""
+        # Check if cash is low
+        if self.user.cash < 10000:
+            return self._consider_loan()
+        
+        # Consider loan for growth opportunities (growth and aggressive personalities)
+        if self.personality in ['growth', 'aggressive'] and self.user.cash < 50000:
+            if len(self.user.companies) < 2:  # Opportunity to expand
+                if random.random() < 0.3:  # 30% chance
+                    loan_amount = random.uniform(20000, 50000)
+                    return f"Strategic loan of ${loan_amount:.0f} for expansion opportunity"
+        
+        return None
+
+    def _make_company_decisions(self, company):
+        """Enhanced company decision making"""
+        decisions = []
+        
+        # Production decisions based on market conditions and personality
+        if company.cash > 5000:
+            for product in company.products:
+                demand_level = product.get_demand_level()
+                
+                # Personality-based production decisions
+                if self.personality == 'aggressive' and demand_level in ['High', 'Very High']:
+                    # Aggressive AI increases production more when demand is high
+                    production_increase = 30
+                elif self.personality == 'conservative' and demand_level in ['Moderate', 'High']:
+                    # Conservative AI only increases production moderately
+                    production_increase = 15
+                elif self.personality == 'opportunistic' and demand_level == 'Very High':
+                    # Opportunistic AI maximizes high-demand situations
+                    production_increase = 40
+                else:
+                    production_increase = 20  # Default
+                
+                if product.stock_quantity < 50 and demand_level in ['High', 'Very High']:
+                    production_cost = product.base_cost * production_increase
+                    if company.cash >= production_cost:
+                        product.stock_quantity += production_increase
+                        company.cash -= production_cost
+                        decisions.append(f"Increased production of {product.name} by {production_increase} units")
+        
+        # Enhanced pricing decisions
+        for product in company.products:
+            demand_level = product.get_demand_level()
+            market_price = product.market_price
+            
+            # More sophisticated pricing based on personality
+            if self.personality == 'aggressive':
+                # Aggressive pricing - push prices higher
+                if demand_level == 'Very High':
+                    new_price = min(market_price * 1.25, product.market_price * 1.4)
+                    if hasattr(product, 'selling_price'):
+                        old_price = product.selling_price
+                        product.selling_price = new_price
+                        decisions.append(f"Aggressive pricing: Raised {product.name} to ${new_price:.2f}")
+                        
+            elif self.personality == 'value':
+                # Value pricing - competitive but profitable
+                if demand_level == 'Low':
+                    new_price = max(market_price * 0.9, product.base_cost * 1.15)
+                    if hasattr(product, 'selling_price'):
+                        old_price = product.selling_price
+                        product.selling_price = new_price
+                        decisions.append(f"Value pricing: Competitive price for {product.name} at ${new_price:.2f}")
+        
+        return decisions
 
 
 class AIController:

@@ -32,6 +32,11 @@ class MarketEngine:
             })
         
         db.session.commit()
+        
+        # Broadcast market updates via WebSocket
+        from app.socketio_events import broadcast_market_update
+        broadcast_market_update(price_changes)
+        
         return price_changes
     
     @staticmethod
@@ -84,29 +89,55 @@ class MarketEngine:
     @staticmethod
     def process_turn():
         """Process a complete economic turn"""
-        # 1. Process AI player decisions
+        # 1. Check for and trigger market events
+        from app.market_events import MarketEventsEngine
+        market_event = MarketEventsEngine.trigger_random_event()
+        seasonal_event = MarketEventsEngine.check_and_trigger_seasonal_events()
+        
+        # 2. Process company production
+        from app.production_engine import ProductionEngine
+        production_results = ProductionEngine.process_all_companies()
+        
+        # 3. Process AI player decisions
         from app.ai_controller import AIController
         ai_decisions = AIController.process_ai_turns()
         
-        # 2. Simulate AI demand
+        # 4. Simulate AI demand
         MarketEngine.simulate_ai_demand()
         
-        # 3. Update product prices
+        # 5. Update product prices
         price_changes = MarketEngine.update_all_prices()
         
-        # 4. Update company valuations
+        # 6. Update company valuations
         valuation_changes = MarketEngine.update_company_valuations()
         
-        # 5. Update companies' monthly performance
+        # 7. Update companies' monthly performance
         MarketEngine.update_company_performance()
         
-        # 6. Process loan payments
+        # 8. Process loan payments
         MarketEngine.process_loan_payments()
+        
+        # 9. Broadcast turn completion
+        from app.socketio_events import broadcast_turn_complete
+        turn_summary = f"{len(price_changes)} price updates, {len(production_results)} companies produced"
+        if market_event:
+            turn_summary += f", Market Event: {market_event.title}"
+        if seasonal_event:
+            turn_summary += f", Seasonal Event: {seasonal_event.title}"
+            
+        game_state = GameState.query.first()
+        broadcast_turn_complete({
+            'turn_number': game_state.current_turn if game_state else 1,
+            'summary': turn_summary
+        })
         
         return {
             'price_changes': price_changes,
             'valuation_changes': valuation_changes,
+            'production_results': production_results,
             'ai_decisions': ai_decisions,
+            'market_event': market_event,
+            'seasonal_event': seasonal_event,
             'timestamp': datetime.utcnow()
         }
     

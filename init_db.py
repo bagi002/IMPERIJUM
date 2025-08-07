@@ -171,7 +171,12 @@ def initialize_game_state(app):
     with app.app_context():
         print("Initializing game state...")
         
-        game_state = GameState.query.first()
+        try:
+            game_state = GameState.query.first()
+        except:
+            # Table might not exist or have missing columns, create a new one
+            game_state = None
+            
         if not game_state:
             game_state = GameState()
             db.session.add(game_state)
